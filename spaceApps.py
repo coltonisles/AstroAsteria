@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
-from IPython.display import clear_output
+# from IPython.display import clear_output
 import time
 import requests
 import pandas as pd
 
 
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
+
+image_folder = "C:\\Users\\Batman\\NASA-Space-Apps"
 
 
 # This is the NASA NEO (Near Earth Object) API endpoint for browsing asteroids:
@@ -234,8 +236,14 @@ plt.xlabel('Date')
 plt.ylabel('Distance from Earth (km)')
 plt.title('1566 Icarus: Proximity to Earth Over Time')
 plt.grid(True)
+
+# SAVE IMAGE OF PLOT TO LOCAL STORAGE
+# TODO: change this location to work with WEB-APP
+plt.savefig(f"{image_folder}/icarus_proximity.png")
 plt.show()
 
 # -- That was PLOT DISTANCE FROM EARTH OVER TIME -- #
+
+
 
 
