@@ -2,27 +2,244 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Impact Scenario Simulator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- LEAFLET/FOLIUM DEPENDENCIES -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
+    <!-- END LEAFLET DEPENDENCIES -->
 
+    <style>
+        /* Custom font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+        /* Custom styling for the primary action button */
+        .primary-btn {
+            background-color: #ef4444; /* Red 500 */
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .primary-btn:hover {
+            background-color: #dc2626; /* Red 600 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        /* Ensure the map container has a defined height, necessary for Leaflet/Folium */
+        #mapContainer {
+            height: 100%; /* Take up remaining space in the flex column */
+        }
+    </style>
+    <!-- Use Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="min-h-screen flex flex-col antialiased">
 
-<style>
-    #map{
-        height: 95%;
-        width: 90%;
+<!-- Header -->
+<header class="bg-gray-800 text-white shadow-lg p-4">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold tracking-tight">
+            <span class="text-red-400">&#9881;</span> Global Impact Simulator
+        </h1>
+        <nav class="hidden md:block">
+            <a href="#inputs" class="mx-3 hover:text-red-400 transition">Scenario</a>
+            <a href="#map" class="mx-3 hover:text-red-400 transition">Map View</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Content Grid -->
+<main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+    <!-- Input/Control Panel (1 column on desktop) -->
+    <div id="inputs" class="lg:col-span-1">
+        <div class="bg-white p-6 rounded-xl shadow-2xl sticky top-8 border-t-4 border-red-500">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800">Select Impact Scenario</h2>
+
+            <form id="scenarioForm" class="space-y-6">
+                <!-- Meteor Selection Dropdown -->
+                <div>
+                    <label for="meteorSelect" class="block text-sm font-medium text-gray-700">Potential Impact Object</label>
+                    <select id="meteorSelect" name="meteorSelect" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-inner p-2.5 focus:ring-red-500 focus:border-red-500 border bg-white text-base">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Selected Meteor Details Display (Optional, for user feedback) -->
+                <div class="bg-gray-100 p-3 rounded-lg text-sm space-y-1 border border-gray-200" id="detailsDisplay">
+                    <p class="font-semibold text-gray-700">Details:</p>
+                    <p class="text-gray-600">Location: <span id="displayLatLon">--</span></p>
+                    <p class="text-gray-600">Characteristics: <span id="displayMassVel">--</span></p>
+                </div>
+
+
+                <!-- Plot Button -->
+                <button type="submit" class="primary-btn w-full text-white font-bold py-3 px-4 rounded-xl shadow-md uppercase tracking-wider mt-6">
+                    Simulate & Plot Impact
+                </button>
+
+                <!-- Status Message Box -->
+                <div id="statusMessage" class="mt-4 p-3 text-sm text-gray-700 bg-gray-100 rounded-lg hidden">
+                    Awaiting input...
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Map Visualization Area (3 columns on desktop) -->
+    <div id="map" class="lg:col-span-3">
+        <!-- Increased min-h to guarantee visibility and space on any screen -->
+        <div class="bg-white p-4 rounded-xl shadow-2xl min-h-[600px] flex flex-col border-t-4 border-red-500 h-full">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Interactive Map Visualization</h2>
+            <p class="text-sm text-gray-500 mb-4">The calculated impact plot (using Folium/Leaflet) will be displayed below, based on the selected object's parameters.</p>
+
+            <!-- This is the container where your Folium-generated map HTML will be embedded -->
+            <div id="mapContainer" class="flex-grow bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 text-lg italic">
+                    <span id="mapPlaceholder" class="text-center p-8">
+                        Select an object and click "Simulate & Plot Impact" to generate the map.
+                    </span>
+                <!-- The Folium map HTML fragment will be injected here. -->
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="mt-8 p-4 text-center text-gray-500 text-sm">
+    <p>Built with Python Geospatial Libraries & Tailwind CSS. Scenario data is simulated.</p>
+</footer>
+
+<script>
+    // Simulated JSON data structure (This is where you would load your real data)
+    const meteorData = [
+        { id: 'placeholder', name: '--- Select a Meteor ---', lat: null, lon: null, mass: null, velocity: null },
+        { id: 'apophis_near', name: '99942 Apophis (2029 Pass)', lat: 30.0, lon: -100.0, mass: 27000000000, velocity: 7.4 },
+        { id: 'tunga_size', name: 'Tunguska Equivalent (Siberia)', lat: 60.83, lon: 105.5, mass: 1000000, velocity: 15.0 },
+        { id: 'large_pacific', name: 'Large Pacific Impact', lat: -5.0, lon: 160.0, mass: 500000000000, velocity: 45.0 }
+    ];
+
+    const selectElement = document.getElementById('meteorSelect');
+    const displayLatLon = document.getElementById('displayLatLon');
+    const displayMassVel = document.getElementById('displayMassVel');
+
+    // Function to populate the dropdown
+    function populateDropdown() {
+        meteorData.forEach(meteor => {
+            const option = document.createElement('option');
+            option.value = meteor.id;
+            option.textContent = meteor.name;
+            selectElement.appendChild(option);
+        });
+        updateDetailsDisplay('placeholder');
     }
-</style>
 
-<div id="map"></div>
+    // Function to update the details display panel
+    function updateDetailsDisplay(selectedId) {
+        const meteor = meteorData.find(m => m.id === selectedId);
+        if (meteor && meteor.lat !== null) {
+            displayLatLon.textContent = `${meteor.lat.toFixed(2)}° N, ${meteor.lon.toFixed(2)}° E`;
+            displayMassVel.textContent = `${(meteor.mass / 1000000).toFixed(0)} million kg at ${meteor.velocity.toFixed(1)} km/s`;
+        } else {
+            displayLatLon.textContent = '--';
+            displayMassVel.textContent = '--';
+        }
+    }
+
+    // Event listener for dropdown change
+    selectElement.addEventListener('change', (e) => {
+        updateDetailsDisplay(e.target.value);
+    });
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', populateDropdown);
 
 
+    document.getElementById('scenarioForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
+        const selectedId = selectElement.value;
+
+        if (selectedId === 'placeholder') {
+            const statusBox = document.getElementById('statusMessage');
+            statusBox.classList.remove('hidden', 'bg-gray-100');
+            statusBox.classList.add('bg-red-100', 'text-red-700');
+            statusBox.innerHTML = `Please select a valid Potential Impact Object from the list.`;
+            return;
+        }
+
+        const selectedMeteor = meteorData.find(m => m.id === selectedId);
+        const lat = selectedMeteor.lat;
+        const lon = selectedMeteor.lon;
+        const mass = selectedMeteor.mass;
+        const velocity = selectedMeteor.velocity;
+
+        const statusBox = document.getElementById('statusMessage');
+        statusBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+        statusBox.classList.add('bg-gray-100', 'text-gray-700');
+        statusBox.innerHTML = `Running simulation for: <strong>${selectedMeteor.name}</strong> <br>Lat: ${lat}, Lon: ${lon}, Mass: ${mass} kg, Velocity: ${velocity} km/s. <br>...Awaiting Python backend response...`;
+
+        // --- KEY INTEGRATION POINT ---
+        // This is the fetch call where you send {lat, lon, mass, velocity} to your
+        // Python backend (Flask/FastAPI) and expect the raw Folium map HTML back.
+        /*
+        fetch('/api/simulate-impact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat, lon, mass, velocity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // The Folium map HTML (data.map_html) is injected here
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.innerHTML = data.map_html;
+
+            // Remove centering classes to let the map take full space
+            mapContainer.classList.remove('flex', 'items-center', 'justify-center');
+
+            document.getElementById('statusMessage').innerHTML = \`Simulation Complete. Map Updated.\`;
+        })
+        .catch(error => {
+            statusBox.innerHTML = \`<span class="text-red-600">Error:</span> Could not connect to the backend.\`;
+            console.error('Simulation failed:', error);
+        });
+        */
+        // --- End Placeholder ---
+
+        // Placeholder simulation for demonstration:
+        setTimeout(() => {
+            const mapContainer = document.getElementById('mapContainer');
+
+            // Create a basic Leaflet map directly in the front end for better visibility,
+            // simulating what Folium would generate.
+            mapContainer.innerHTML = `<div id="leaflet-map-display" style="height: 100%; width: 100%; border-radius: 0.5rem;"></div>`;
+            mapContainer.classList.remove('flex', 'items-center', 'justify-center');
+
+            // Initialize the Leaflet map in the new div
+            let map = L.map('leaflet-map-display').setView([lat, lon], 4);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add a red marker for the impact point
+            L.marker([lat, lon]).addTo(map)
+                .bindPopup(`<b>${selectedMeteor.name}</b><br>Impact Point: ${lat.toFixed(2)}, ${lon.toFixed(2)}`)
+                .openPopup();
+
+
+            document.getElementById('statusMessage').innerHTML = `Simulation Complete. Map Updated. (Placeholder map shown)`;
+        }, 1500);
+    });
+</script>
 </body>
 </html>
