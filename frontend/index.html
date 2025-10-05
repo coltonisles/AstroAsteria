@@ -113,6 +113,7 @@
         height: 100%;
         width: 65vw;
         z-index: 1;
+        
         border: 3px solid var(--color-primary);
         border-radius: 8px;
         box-shadow: 0 0 12px rgba(0,198,255,0.3);
@@ -472,7 +473,7 @@
 
                 // Update display text only using the main blast radius animation (index 0)
                 if (anim.isMainBlast) {
-                    display.textContent = `Simulating: ${name} | Current Radius: ${(currentRadius / 1000).toFixed(2)} km`;
+                    display.textContent = `Simulating: ${name} | Current Over Pressure Radius: ${(currentRadius / 1000).toFixed(2)} km`;
                 }
             });
 
@@ -483,7 +484,7 @@
                 // Animation complete, set final display text once
                 const finalBlastRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
                 const finalCraterRadiusKm = (animations[1].targetRadius / 1000).toFixed(2);
-                display.textContent = `Plotted: ${name} | Final Blast Radius: ${finalBlastRadiusKm} km | Final Crater Radius: ${finalCraterRadiusKm} km`;
+                display.textContent = `Plotted: ${name} | Over Pressure Radius: ${finalBlastRadiusKm} km | Crater Radius: ${finalCraterRadiusKm} km`;
                 done = true;
             }
         }
