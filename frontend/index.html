@@ -9,32 +9,50 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
 
-    <style>
-        /* Define map dimensions */
-        #map {
-            height: 60vh;
-            width: 80vw;
-            float:left;
-        }
-    </style>
+
 </head>
+
+<style>
+    /* Define map dimensions */
+    #map {
+        height: 60vh;
+        width: 80vw;
+        float:left;
+    }
+    .list-item{
+        padding: 5px;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    .list-item:hover{
+        background-color: rgba(0,0,0,0.1);
+    }
+    .list-item.selected{
+        background-color: rgba(0,0,0,0.1);
+        color:white;
+        font-weight: bold;
+    }
+</style>
+
 <body>
 
 <div id="map"></div>
 
-<div id="list">
-    <ul id="neos">
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-        <li>placeHolder</li>
-    </ul>
+<div id="list-container">
+    <ol id="neo-list">
+        <li class="list-item">placeHolder1</li>
+        <li class="list-item">placeHolder2</li>
+        <li class="list-item">placeHolder3</li>
+        <li class="list-item">placeHolder4</li>
+        <li class="list-item">placeHolder5</li>
+        <li class="list-item">placeHolder6</li>
+        <li class="list-item">placeHolder7</li>
+        <li class="list-item">placeHolder8</li>
+        <li class="list-item">placeHolder9</li>
+        <li class="list-item">placeHolder0</li>
+    </ol>
+    <!--temp-->
+    <p id="neo-display"></p>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -77,9 +95,24 @@
                 .openPopup();
         });
 
-    }); // End of DOMContentLoaded
+        const list = document.getElementById('neo-list');
+        const display = document.getElementById('neo-display');
 
-    // The previous click listener code was here, which caused the error.
+        list.addEventListener('click', function(e) {
+            const selected = e.target.closest('li');
+
+            if(selected && list.contains(selected)) {
+                //meteor name
+                const itemContent = selected.textContent.trim();
+
+                display.textContent = `Selected Item: ${itemContent}`;
+            }
+            //add highlighting function
+        })
+
+
+    });// End of DOMContentLoaded
+
 </script>
 
 </body>
