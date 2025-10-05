@@ -70,8 +70,28 @@
     #plotBtn:hover{
         background-color: rgba(0, 0, 0, 0.3);
     }
-</style>
-<style>
+    header
+    {
+        background-color: var(--color-bg-light);
+        color: var(--color-primary);
+        text-align: center;
+        padding: 20px;
+        font-size: 1.8em;
+        font-weight: bold;
+        border-bottom: 3px solid var(--color-primary);
+        box-shadow: 0 2px 5px rgba(0, 198, 255, 0.1);
+        z-index: 1000;
+    }
+    .top-container
+    {
+        display: flex;
+        height: 700px;
+        width: 100vw;
+        overflow: hidden;
+        border-bottom: 3px solid var(--color-primary);
+        flex-shrink: 0;
+    }
+
     /* -------------------------------------- */
     /* CSS VARIABLES (The "Template")         */
     /* Change these values to quickly change the entire theme. */
@@ -338,7 +358,12 @@
 </style>
 
 <body>
-<div>  <div id="map"></div>
+    
+    <header>
+
+    </header>
+
+<div class="top-container">  <div id="map"></div>
 
     <div id="list-container">
         <ol id="neo-list">
