@@ -13,12 +13,7 @@
 </head>
 
 <style>
-    body > div:first-child {
-        display:flex;
-        height: 700px;
-        width: 100vw;
-        overflow: hidden;
-    }
+    
     /* Define map dimensions */
     #map {
         height: 100%;
@@ -118,6 +113,7 @@
         flex-direction: column;
         min-height: 100vh;
     }
+
 
     /* Top half container (Map + List/Controls) */
     body > div:first-child {
@@ -587,7 +583,7 @@
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
             <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
-            <li>Crater Radius: ${} km/s</li>
+            <li>Crater Radius: ${blastR_km} km/s</li>
             <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
             <li>Resulting Earthquake Magnitude: TBD</li>
             <li>Total Area Impacted: TBD</li>
@@ -595,7 +591,7 @@
             It compares the potential impact risk to the average background risk over the time remaining until the potential event.
             A value of 0 means the risk equals the background risk.
             A value of +1 means the risk is 10 times higher than the background.
-            A value of −2 or lower is considered negligible.">Palermo Scale:</abbr>: TBD</li>
+            A value of -2 or lower is considered negligible.">Palermo Scale:</abbr>: TBD</li>
         `;
     }
 
