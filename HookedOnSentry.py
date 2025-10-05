@@ -679,7 +679,7 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
         approach_date_i = get_next_approach_date_by_neoID(i)
         # print(approach_date_i)
         top_X.append({'neo_id': i, 'next_approach': approach_date_i})
-    top_X.sort(key=lambda x: x['next_approach'])
+    top_X.sort(key=lambda x: (x['next_approach'] is None, x['next_approach']))
     for entry in top_X:
         print(entry['neo_id'])
         print(entry['next_approach'])
@@ -717,7 +717,19 @@ asteroid_db = {
 # asteroid_DB = populate_ASTEROID_db_by_neo_IDs()
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
+
+    multipage_fetch_NEO_IDs(3)
+    data_dict = send_db_to_html(global_list_of_saved_NEO_IDs)
+    import json
+
+    try:
+        json.dumps(data_dict)  # Test if serializable
+        print("success")
+    except TypeError as e:
+        print("Serialization error:", e)
+    
+    print(data_dict)
 
 #     # print(get_damageString_from_neoID("3092161"))
 #     # print(get_damageString_from_neoID("2001566"))
@@ -733,6 +745,9 @@ asteroid_db = {
 #     plot_asteroid_dictionary(neo_2001566)
 #     plot_asteroid_dictionary(neo_3092161)
     # Test sorting
+
+
+
     # multipage_fetch_NEO_IDs(10)
     # print(send_db_to_html(global_list_of_saved_NEO_IDs))
     # print(len(global_list_of_saved_NEO_IDs))
@@ -764,10 +779,10 @@ asteroid_db = {
     # #     return top_X_neo_IDs
 
 
-    multipage_fetch_NEO_IDs(10)
-    print(global_list_of_saved_NEO_IDs)
-    ten_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(100)
-    print(ten_soonest_IDs)
+    # multipage_fetch_NEO_IDs(10)
+    # print(global_list_of_saved_NEO_IDs)
+    # ten_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(100)
+    # print(ten_soonest_IDs)
 
 
     
