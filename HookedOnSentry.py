@@ -11,6 +11,8 @@ import pandas as pd
 import os, io
 import sys
 from datetime import datetime
+from matplotlib.ticker import MaxNLocator
+import matplotlib.dates as mdates
 
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
@@ -143,8 +145,6 @@ def multipage_fetch_NEOs(limit=5000):
         r = requests.get(neo_api_url)
         if r.status_code != 200:
             raise RuntimeError(f"Sentry API request failed: {r.status_code} - {r.text}")
-        else:
-            print(f"Successfully access page {global_page_to_browse}")
         page_of_NEOs_json = r.json()
 
         # Update GLOBAL DICT of multi-paged dataset to include this page
@@ -156,7 +156,6 @@ def multipage_fetch_NEOs(limit=5000):
             global_list_of_saved_NEOs.append(neo)
             if neo['is_sentry_object']:
                 global_list_of_saved_NEOs_in_Sentry.append(neo)
-                print(f"\nFound a SENTRY object! {neo.get('id')}")
             if len(global_list_of_saved_NEOs) >= limit:
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
@@ -342,14 +341,21 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
 
 # -- plot the RETURNED DICTIONARY from 'fetch_asteroid_dictionary(neo_id, api_key)' -- #
 def plot_asteroid_dictionary(asteroid_dict):
+    dates_to_plot = convert_approach_dates_to_DateTypeList(asteroid_dict['close_approach_date'])
     plt.figure(figsize=(10, 5))
-    plt.plot(asteroid_dict['close_approach_date'], asteroid_dict['miss_distance_km'], marker='o')
+    plt.plot(dates_to_plot, asteroid_dict['miss_distance_km'], marker='o')
     plt.xlabel('Close Approach Date')
-    plt.ylabel('Miss Distance (km)')
-    plt.title(f'Asteroid {asteroid_dict["name"]} Miss Distance Over Time')
+    plt.ylabel('Miss Distance (tens of millions of kilometers from Earth)')
+    plt.title(f'Asteroid {asteroid_dict["name"]} Proximity to Earth Distance Over Time')
     plt.xticks(rotation=45)
+    # Format the x-axis dates
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))  # Change format to just Year
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())  # Automatically determine good intervals
+    plt.gcf().autofmt_xdate()  # Automatically format the x-axis labels
+    plt.axvline(datetime.now(), color='red', linestyle='--', label='Today')
     plt.grid(True)
     plt.tight_layout()
+    plt.legend()
     plt.show()
 
 # -------------------------------------------------------- #
@@ -639,41 +645,20 @@ def get_next_approach_date_by_neoID(neo_id):
 
 
 
-if __name__ == "__main__":
-    # print(get_damageString_from_neoID("3092161"))
-    # print(get_damageString_from_neoID("2001566"))
+# if __name__ == "__main__":
+#     # print(get_damageString_from_neoID("3092161"))
+#     # print(get_damageString_from_neoID("2001566"))
 
-    # plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
-    # plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
+#     # plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
+#     # plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
 
-    neo_2001566 = fetch_asteroid_dictionary("2001566")
-    neo_3092161 = fetch_asteroid_dictionary("3092161")
-
-
-    # What is 'dates[]' like again?
-    # try:
-    #     print(neo_2001566.get('close_approach_date'))
-    # except:
-    #     print("neo.get(\'close_approach_date\') didn't work")
-    
-    # try:
-    #     print(neo_2001566['close_approach_date'])
-    # except:
-    #     print("neo\'close_approach_date\'] didn't work")
-    # They both work:
-    # ['1902-06-11', '1914-08-09', '1921-06-15', '1928-02-18', '1939-06-14', '1940-06-09', '1940-06-20', '1949-04-19', 
-    #  '1949-06-11', '1952-09-29', '1965-01-19', '1968-04-25', '1968-06-14', '1977-05-11', '1986-06-18', '1987-05-05', 
-    #  '1987-06-21', '1989-09-01', '1996-06-11', '2015-06-16', '2025-05-24', '2033-04-30', '2043-06-13', '2044-06-04', 
-    #  '2045-08-21', '2057-12-11', '2062-06-18', '2070-04-02', '2071-06-10', '2074-11-13', '2082-07-24', '2090-06-14', 
-    #  '2094-11-14', '2109-06-19', '2117-03-05', '2118-06-11', '2121-11-20', '2136-03-13', '2137-06-15', '2138-07-13', 
-    #  '2150-11-01', '2156-06-18', '2163-02-21', '2163-04-10', '2170-11-17', '2175-06-12', '2175-06-23', '2184-06-13', 
-    #  '2187-10-02', '2200-01-21']
+#     neo_2001566 = fetch_asteroid_dictionary("2001566")
+#     neo_3092161 = fetch_asteroid_dictionary("3092161")
 
 
-
-    # test
-    print(get_next_approach_date(neo_2001566['close_approach_date']))
-    print(get_next_approach_date(neo_3092161['close_approach_date']))
+#     # test
+#     plot_asteroid_dictionary(neo_2001566)
+#     plot_asteroid_dictionary(neo_3092161)
 
 
     
