@@ -1,4 +1,4 @@
-#TODO: Make the output graph better
+#TODO: Make the output graph better i.e. axis
 #TODO: Make the get_damage() output string better ('.2f')
 #TODO: Clean this code to make it NASA-worthy (https://www.cs.otago.ac.nz/cosc345/resources/nasa-10-rules.htm)
 
