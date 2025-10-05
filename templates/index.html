@@ -367,7 +367,10 @@
 <div class="top-container">  <div id="map"></div>
 
     <div id="list-container">
-        <ol id="neo-list">
+        <ol>
+        {% for neo_id in items %}
+            <li>{{ neo_id }}</li>
+        {% endfor %}
         </ol>
 
         <button id="plotBtn">Simulate Impact</button>
@@ -389,8 +392,8 @@
     <div> <h3>Impact Details:</h3>
         <ul id="impact-details">
             <li>Energy(Mt of TNT):</li>
-            <li>Over Pressure Radius(km):</li>
-            <li>Crater Radius(km)</li>
+            <li>Crater Radius(km):</li>
+            <li>Velocity Upon Entry:</li>
             <li>Resulting Earthquake Magnitude:</li>
             <li>Total Area Impacted(km<sup>2</sup>):</li>
             <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
@@ -563,7 +566,7 @@
     // --- FUNCTION TO POPULATE DETAILS ---
     function populateDetails(neo) {
         // Asteroid Details List (second row, first column)
-        document.querySelector("#details-container > div:first-child h3").textContent = `${neo.name} Details:`;
+        document.querySelector("body > div:last-child > div:first-child h3").textContent = `${neo.name} Details:`;
         const astDetailsList = document.getElementById('asteroid-details');
         astDetailsList.innerHTML = `
             <li>Impact Probability: ${neo.prob}</li>
@@ -571,7 +574,7 @@
             <li>Diameter: ${neo.diameter_km} km</li>
             <li>Mass: ${neo.mass_kg.toExponential(2)} kg</li>
             <li>Velocity: ${neo.velocity / 1000} km/s</li>
-            <li>Density: ${neo.density} kg/m³</li>
+            <li>Density ($\rho$): ${neo.density} kg/m³</li>
         `;
 
         // Impact Details List (second row, second column)
@@ -579,23 +582,15 @@
         const energyMT = energyK / JOULES_PER_MEGATON;
         const blastR_km = Math.round(neo.calculated_radius / 1000);
 
-        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
-        //const craterCountExp = 1.0/2.59
-        //const craterD = Math.pow(energyK / 9.1e17, craterCountExp);
-
-        document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
+        document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
             <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
-            <li>Crater Radius: ${} km/s</li>
-            <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
+            <li>Blast Radius (4 psi): ${blastR_km} km</li>
+            <li>Velocity Upon Entry: ${neo.velocity / 1000} km/s</li>
             <li>Resulting Earthquake Magnitude: TBD</li>
             <li>Total Area Impacted: TBD</li>
-            <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
-            It compares the potential impact risk to the average background risk over the time remaining until the potential event.
-            A value of 0 means the risk equals the background risk.
-            A value of +1 means the risk is 10 times higher than the background.
-            A value of −2 or lower is considered negligible.">Palermo Scale:</abbr>: TBD</li>
+            <li>Palermo Scale: TBD</li>
         `;
     }
 
