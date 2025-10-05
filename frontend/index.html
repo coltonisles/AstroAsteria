@@ -71,6 +71,180 @@
         background-color: rgba(0, 0, 0, 0.3);
     }
 </style>
+<style>
+    /* -------------------------------------- */
+    /* CSS VARIABLES (The "Template")         */
+    /* Change these values to quickly change the entire theme. */
+    /* -------------------------------------- */
+    :root {
+        --color-primary: #00c6ff;     /* Blue accent (status text, selected list) */
+        --color-secondary: #f03;    /* Red accent (impact button, blast radius highlight) */
+        --color-bg-dark: #121212;     /* Main background */
+        --color-bg-light: #1e1e1e;    /* Containers/panels background */
+        --color-text-light: #e0e0e0;  /* Main text color */
+        --color-border: #333;         /* Separator/divider color */
+        --spacing-unit: 15px;         /* Base padding unit */
+    }
+
+    /* -------------------------------------- */
+    /* GLOBAL & LAYOUT STYLES                 */
+    /* -------------------------------------- */
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        background-color: var(--color-bg-dark);
+        color: var(--color-text-light);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Top half container (Map + List/Controls) */
+    body > div:first-child {
+        display: flex;
+        height: 700px;
+        width: 100vw;
+        overflow: hidden;
+        border-bottom: 3px solid var(--color-primary);
+    }
+
+    /* Define map dimensions */
+    #map {
+        height: 100%;
+        width: 65vw;
+        z-index: 1;
+    }
+
+    /* List and Controls Container */
+    #list-container {
+        height: 100%;
+        width: 35vw;
+        overflow-y: auto;
+        background-color: var(--color-bg-light);
+        padding: var(--spacing-unit) 25px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Headers */
+    h3 {
+        color: var(--color-primary);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 5px;
+        margin-top: 0;
+    }
+
+    /* NEO Display/Instruction Text */
+    #neo-display {
+        font-size: 1em;
+        padding: 10px;
+        margin-top: 20px;
+        color: var(--color-primary);
+        border: 1px dashed var(--color-primary);
+        background-color: rgba(0, 198, 255, 0.1); /* Semi-transparent background using the primary color */
+        font-weight: bold;
+        text-align: center;
+    }
+
+    /* -------------------------------------- */
+    /* NEO LIST STYLES                        */
+    /* -------------------------------------- */
+    #neo-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1;
+    }
+
+    .list-item {
+        padding: 12px 15px;
+        font-size: 1.1em;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        transition: background-color 0.2s, color 0.2s;
+        border: 1px solid var(--color-border);
+    }
+
+    .list-item:hover {
+        background-color: var(--color-border); /* Use border color for hover background */
+        color: #fff;
+    }
+
+    .list-item.selected {
+        background-color: var(--color-primary);
+        color: var(--color-bg-dark);
+        font-weight: bold;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    }
+
+    /* -------------------------------------- */
+    /* BUTTON STYLES                          */
+    /* -------------------------------------- */
+    #plotBtn {
+        width: 100%;
+        height: 50px;
+        font-size: 1.4em;
+        cursor: pointer;
+        background-color: var(--color-secondary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        margin-top: var(--spacing-unit);
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    #plotBtn:hover {
+        background-color: #d02a00; /* Slightly darker red on hover */
+        transform: translateY(-2px);
+    }
+
+    #plotBtn:active {
+        background-color: var(--color-secondary);
+        transform: translateY(0);
+    }
+
+    /* -------------------------------------- */
+    /* DETAILS SECTION                        */
+    /* -------------------------------------- */
+    body > div:last-child {
+        display: flex;
+        padding: 20px;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: var(--color-bg-light);
+        border-top: 1px solid var(--color-border);
+    }
+
+    body > div:last-child > div {
+        flex: 1;
+        padding: 0 20px;
+        border-right: 1px solid var(--color-border);
+    }
+
+    body > div:last-child > div:last-child {
+        border-right: none;
+    }
+
+    #asteroid-details, #impact-details {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    #asteroid-details li, #impact-details li {
+        padding: 5px 0;
+        border-bottom: 1px dotted var(--color-border);
+        font-size: 1em;
+    }
+
+    /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
+       for the Impact Radius, so no :nth-child styles are needed here. */
+
+</style>
 
 <body>
 <div>  <div id="map"></div>
@@ -207,8 +381,9 @@
                 requestAnimationFrame(step);
             } else if (!done) {
                 // Animation complete, set final display text once
-                const finalRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
-                display.textContent = `Plotted: ${name} | Final Radius: ${finalRadiusKm} km`;
+                const finalBlastRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
+                const finalCraterRadiusKm = (animations[1].targetRadius / 1000).toFixed(2);
+                display.textContent = `Plotted: ${name} | Final Blast Radius: ${finalBlastRadiusKm} km | Final Crater Radius: ${finalCraterRadiusKm} km`;
                 done = true;
             }
         }
