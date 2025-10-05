@@ -282,6 +282,7 @@
         font-style: italic;
     }
 
+
     /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
        for the Impact Radius, so no :nth-child styles are needed here. */
 
@@ -304,20 +305,24 @@
         <ul id="asteroid-details">
             <li>Impact Probability:</li>
             <li>Predicted Impact Date:</li>
-            <li>Diameter:</li>
-            <li>Mass:</li>
-            <li>Distance from Earth:</li>
-            <li>Velocity:</li>
+            <li>Diameter(km):</li>
+            <li>Mass(Tons):</li>
+            <li>Distance from Earth(km):</li>
+            <li>Velocity(km/s):</li>
         </ul>
     </div>
     <div> <h3>Impact Details:</h3>
         <ul id="impact-details">
-            <li>Energy:</li>
-            <li>Crater Size:</li>
+            <li>Energy(Mt of TNT):</li>
+            <li>Crater Radius(km):</li>
             <li>Velocity Upon Entry:</li>
             <li>Resulting Earthquake Magnitude:</li>
-            <li>Total Area Impacted:</li>
-            <li>Palermo Scale:</li>
+            <li>Total Area Impacted(km<sup>2</sup>):</li>
+            <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
+            It compares the potential impact risk to the average background risk over the time remaining until the potential event.
+            A value of 0 means the risk equals the background risk.
+            A value of +1 means the risk is 10 times higher than the background.
+            A value of −2 or lower is considered negligible.">Palermo Scale:</abbr></li>
         </ul>
     </div>
     <div id="graph-placeholder"> 
