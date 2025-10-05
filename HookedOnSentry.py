@@ -175,48 +175,12 @@ def multipage_fetch_NEOs(limit=5000):
 #     print(global_list_of_saved_NEOs_in_Sentry['id'])
 # # / test code
 
-# -------------------------------------------------------- #
-# ----- SENTRY DATA WHERE AVAILABLE ------- #
-# -------------------------------------------------------- #
-def fetch_sentry_data_from_url(sentry_url):
-    """
-    One field in the original NEO data is 'is_sentry_object'. If true, an additional field is present called 'sentry_data_url', linking
-    to the Sentry API. This function fetches the Sentry data from that URL.
-    1. sentry_url: str - The URL to fetch Sentry data from.
-
-    Returns:
-    dict - The JSON response from the Sentry API as a dictionary.
-    """
-    resp = requests.get(sentry_url)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
-    sentry_response = resp.json()
-    return sentry_response
-
-def fetch_sentry_object_details_from_des(sentry_designation):
-    """
-    The above Sentry API hook does not actually include the 'ENERGY' field... 
-    BUT
-    That is accessible through another URL in this function.
-    1. sentry_designation: str - 'designation' value, which would be found in the above function.
-
-    Returns:
-    dict - The JSON response from the Sentry API for the specific designation as a dictionary.
-    """
-    # example: "https://ssd-api.jpl.nasa.gov/sentry.api?des=1997 TC25"
-    url = "https://ssd-api.jpl.nasa.gov/sentry.api?des=" + sentry_designation
-    resp = requests.get(url)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
-    sentry_object_details_json = resp.json()    
-    return sentry_object_details_json
-
 
 # -------------------------------------------------------- #
 # ----- NEO DATA FETCH AND PLOT ------- #
 # -------------------------------------------------------- #
 # -- FULL ASTEROID DATA FETCH -- #
-def fetch_asteroid_dictionary(neo_id, api_key) -> dict:
+def fetch_asteroid_dictionary(neo_id) -> dict:
     """
     This has been expanded to include the link to the SBDB details.
     If the asteroid IS a Sentry object, it will also fetch the Sentry data by following the breadcrumbs
@@ -390,6 +354,42 @@ def print_all_data_for_asteroid_dict(asteroid_dict):
         print(f"\n{key}: {value}")
 
 
+# -------------------------------------------------------- #
+# ----- SENTRY DATA WHERE AVAILABLE ------- #
+# -------------------------------------------------------- #
+def fetch_sentry_data_from_url(sentry_url):
+    """
+    One field in the original NEO data is 'is_sentry_object'. If true, an additional field is present called 'sentry_data_url', linking
+    to the Sentry API. This function fetches the Sentry data from that URL.
+    1. sentry_url: str - The URL to fetch Sentry data from.
+
+    Returns:
+    dict - The JSON response from the Sentry API as a dictionary.
+    """
+    resp = requests.get(sentry_url)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
+    sentry_response = resp.json()
+    return sentry_response
+
+def fetch_sentry_object_details_from_des(sentry_designation):
+    """
+    The above Sentry API hook does not actually include the 'ENERGY' field... 
+    BUT
+    That is accessible through another URL in this function.
+    1. sentry_designation: str - 'designation' value, which would be found in the above function.
+
+    Returns:
+    dict - The JSON response from the Sentry API for the specific designation as a dictionary.
+    """
+    # example: "https://ssd-api.jpl.nasa.gov/sentry.api?des=1997 TC25"
+    url = "https://ssd-api.jpl.nasa.gov/sentry.api?des=" + sentry_designation
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
+    sentry_object_details_json = resp.json()    
+    return sentry_object_details_json
+
 
 # -------------------------------------------------------- #
 # ----- MATH FOR WHEN SENTRY != AVAILABLE ------- #
@@ -449,7 +449,7 @@ def get_damageString_from_neoID(neo_id) -> str:
     RETURNS:
     str: Text based damage display in the event of impact.
     """
-    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    asteroid = fetch_asteroid_dictionary(neo_id)
     name = asteroid.get('name')
     diameter_m = asteroid.get('estimated_diameter_meters')
     mass_kg = asteroid.get('mass_kg')
@@ -490,7 +490,7 @@ def get_damageData_from_neoID(neo_id) -> dict:
             'isPredicted': isPredicted,
             'ip': impact_probability
     """
-    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    asteroid = fetch_asteroid_dictionary(neo_id)
     name = asteroid.get('name')
     diameter_m = asteroid.get('estimated_diameter_meters')
     mass_kg = asteroid.get('mass_kg')
@@ -522,7 +522,7 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
     RETURNS:
         float: Kinetic Energy on Impact (Megatons) 
     """
-    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    asteroid = fetch_asteroid_dictionary(neo_id)
     kinetic_Energy_Mt = asteroid.get('energy_Mt')
     
     return kinetic_Energy_Mt
@@ -531,11 +531,13 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 # TEST ASTEROID: 3092161
-# neo3092161 = fetch_asteroid_dictionary("3092161", api_key)
+# neo3092161 = fetch_asteroid_dictionary("3092161")
 # print_all_data_for_asteroid_dict(neo3092161)
 # plot_asteroid_dictionary(neo3092161)
 # print(neo3092161.get('is_sentry_object'))
-# get_damage_from_neoID("3092161")
+# get_damageString_from_neoID("3092161")
+
+
 
 
 
@@ -543,4 +545,8 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 if __name__ == "__main__":
-    print(get_damage_from_neoID("3092161"))
+    print(get_damageString_from_neoID("3092161"))
+    print(get_damageString_from_neoID("2001566"))
+
+    plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
+    plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
