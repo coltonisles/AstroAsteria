@@ -6,6 +6,9 @@ import time
 import requests
 import pandas as pd
 
+# -- AU to KM CONVERSION FACTOR -- #
+au_to_km = 149597870.7  # 1 Astronomical Unit in kilometers
+AU_KM = 149597870.7
 
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 
@@ -245,5 +248,102 @@ plt.show()
 # -- That was PLOT DISTANCE FROM EARTH OVER TIME -- #
 
 
+# -------------------------------------------------------------------- #
+# -------------------------------------------------------------------- #
 
 
+# TRYING THIS DATASET INSTEAD: https://ssd-api.jpl.nasa.gov/cad.api
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+# from IPython.display import clear_output
+import time
+import requests
+import pandas as pd
+url = "https://ssd-api.jpl.nasa.gov/cad.api"
+toQuery = {
+    # "des": "1566",  # Designation of the asteroid
+    "dist-max": "0.05",  # Maximum distance in AU
+    "date-min": "1900-01-01",  # Start date
+    "date-max": "2100-12-31",  # End date
+    "sort": "dist",  # Sort by distance
+    "limit": 10,  # Limit results
+}
+# ** "des" NOTE: when submitting a des containing a space in your query string, you must replace the space with %20, for example '2015 AB' = '2015%20AB'
+
+list_of_asteroids = requests.get(url, params=toQuery)
+data = list_of_asteroids.json()
+print(data)
+
+
+# --- parse CAD response into a DataFrame ---
+import os
+import io
+au_to_km = 149597870.7  # 1 Astronomical Unit in kilometers
+
+
+fields = data.get('fields', [])
+rows = data.get('data', [])
+cad_df = pd.DataFrame(rows, columns=fields)
+
+# normalize columns and types
+cad_df['cd'] = pd.to_datetime(cad_df['cd'])            # close-approach date
+cad_df['dist'] = cad_df['dist'].astype(float)          # distance in AU
+
+# pick the first result's designation
+first_des = cad_df.iloc[0]['des']
+print("First designation:", first_des)
+
+# That is the first result (first_des)
+
+# re-query to get its full history
+
+this_des = requests.get(url, params={'des': first_des, 'date-min': toQuery['date-min'], 'date-max': toQuery['date-max']})
+this_data = this_des.json()
+this_rows = this_data.get('data', [])
+this_df = pd.DataFrame(this_rows, columns=this_data.get('fields', []))
+this_df['cd'] = pd.to_datetime(this_df['cd'])
+this_df['dist'] = this_df['dist'].astype(float)
+
+this_df['dist'] = this_df['dist'] * au_to_km  # convert AU to KM
+# -------------------------------------------------------------------- #
+# -- 
+# -------------------------------------------------------------------- #
+
+plt.figure(figsize=(10,5))
+plt.plot(this_df['cd'], this_df['dist'], marker='o')
+plt.xlabel('Date')
+plt.ylabel('Distance from Earth (km)')
+plt.title(f'{first_des}: Proximity to Earth Over Time')
+plt.grid(True)
+
+plt.show()
+
+
+## HOLY SHIT THAT WORKED and actually output a plot.
+# Specifically, the asteroid "this_des" 
+
+# Now we can iterate through the top 10 or so NEOs...
+
+###
+###
+
+
+
+# TRY GETTING DIAMETER FROM SBDB
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+# from IPython.display import clear_output
+import time
+import requests
+import pandas as pd
+url = "https://ssd-api.jpl.nasa.gov/cad.api"
+testQ = {
+    "des": "2020 VT4",  # Designation of the asteroid
+}
+# ** "des" NOTE: when submitting a des containing a space in your query string, you must replace the space with %20, for example '2015 AB' = '2015%20AB'
+
+asteroid_1566 = requests.get("https://ssd-api.jpl.nasa.gov/cad.api?des=1566")
+data_ast_1566 = asteroid_1566.json()
+print(data_ast_1566)
