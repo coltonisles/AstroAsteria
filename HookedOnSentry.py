@@ -1,6 +1,6 @@
 #TODO: Make the output graph better
 #TODO: Make the get_damage() output string better ('.2f')
-#TODO: Clean this code to make it NASA-worthy
+#TODO: Clean this code to make it NASA-worthy (https://www.cs.otago.ac.nz/cosc345/resources/nasa-10-rules.htm)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,23 +15,101 @@ api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
 
 
+# --------------------------------- #
+# -- (useful) CALLABLE FUNCTIONS -- #
+"""
+#
+# -- FETCHING FUNCTIONS -- #
+#
+multipage_fetch_NEOs(limit=100)
+    - Populates the global list of NEOs found in the dataset
+    - INPUT: (optional: 
+                limit: int = maximum size of the list of NEOs)
+#
+fetch_asteroid_dictionary(neo_id, api_key)
+    - get the USEFUL data from the NASA dataset
+        - will automatically fetch additional data from SENTRY if it is a SENTRY object
+    - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
+    - RETURNS:
+        void    
+        Outputs a MatPlotLib plot
+#
+#
+# All other FETCH functions are called from the above FETCHers, where applicable
+#
+#
+# -- DATA PRESENTATION -- #
+#
+print_all_data_for_asteroid_dict(asteroid_dict)
+    == toString()
+    - INPUT: dict == the return of:
+            fetch_asteroid_dictionary(neo_id, api_key)
+    - OUTPUT:
+        str:    Formatted string of the useful data
+#
+get_impactEnergy_Mt_from_neoID(neo_id) -> float:
+        - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
+        - RETURNS: 
+            float: Kinetic Energy on impact, in Megatons 
+#
+get_damageString_from_neoID(neo_ID)
+        - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
+        - RETURNS: 
+            str: A string blurb describing damage
+#
+get_damageData_from_neoID(neo_id)
+        - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
+        - RETURNS:
+            dict: 
+                'name': name,
+                'diameter': diameter_m,
+                'mass': mass_kg,
+                'velocity': velocity_infinity_kps,
+                'energy': kinetic_Energy_Mt,
+                'isPredicted': isPredicted,
+                'ip': impact_probability
+#
+#
+# -- PLOTTING -- #
+#
+plot_asteroid_dictionary(asteroid_dict)
+#
+#
+# -- MATH -- #
+#
+compute_kinetic_energy_Mt_from_massKG_and_velocityKPH(mass_kg, velocity_kph, *, return_unit='Mt')
+        - INPUT: mass (kilograms); velocity (km/h); [optional: Return Unit (options = "{'tons', 'joules', 'megatons'(default})]
+        - RETURNS: 
+            float: Energy, in Megatons (unless 'return_unit' has been specified)
+#
+compute_average_velocity(velocities_list)
+        - INPUT: list (from the neo_object['close_approach_data'] velocities)
+        - OUTPUT:
+            float: averaged velocity (same units as input)
+#
+compute_mass_kg_from_diameter(estimated_diameter_meters, density_g_cm3=2.6)
+        - INPUT: float -> diameter (meters); [optional: float -> density (g/cm^3)]
+        - OUTPUT: 
+            float: Mass (kilograms)
+"""
+
+# ----------------------------- #
+# -- GLOBAL VARIABLE STORAGE -- #
+# Preparing lists to store NEOs. Including separate lists for their IDs 
+global_list_of_saved_NEOs = []
+global_list_of_saved_NEOs_in_Sentry = []
+global_neo_multipage_dataset = {}
+global_page_to_browse = 0
 """
 The main FETCH functions only pull 1 PAGE at a time, out of who knows how many pages...
-So this below function should recursively browse (all?) the pages, until a defined
-limit is reached. 
-
-Not calling it yet though (commented-out) because it's slow. (I did confirm that it works though)
+So this below function browses all the pages, until a defined limit is reached. 
 """
-# Preparing lists to store NEOs. Including separate lists for their IDs 
-list_of_100_neos = []
-list_of_neos_in_Sentry = []
-
-def search_neo_dataset_for_sentry_asteroids(limit=100):
+def multipage_fetch_NEOs(limit=100):
     """
-    This function recurssively browses all of the pages of the NASA NEO api dataset, and adds each NEO to 
-    'list_of_100_neos' until a defined limit (default = 100)
+    This function browses *all* of the pages of the NASA NEO api dataset, and adds each NEO to 
+    'list_of_saved_neos' until a defined limit (default = 100)
 
-    If a NEO is ALSO in the NASA SENTRY API, it will be added to 'list_of_neos_in_Sentry' for easy reference
+    If a NEO is ALSO in the NASA SENTRY API, it will be added to 'list_of_saved_neos_in_Sentry' for easy reference
     for simulations that would benefit from the Sentry data.
 
     Params:
@@ -40,21 +118,62 @@ def search_neo_dataset_for_sentry_asteroids(limit=100):
     Returns:
     N/A -> fills the gloabal lists
     """
-    page +=1
-    reccursive_neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?page={page}&size=20&api_key={api_key}"
-    neo_response = requests.get(reccursive_neo_url)
-    neo_data = neo_response.json()
-    neo_asteroids = neo_data['near_earth_objects']
-    for neo in neo_asteroids:
-        list_of_100_neos.append(neo)
-        if neo['is_sentry_object']:
-            list_of_neos_in_Sentry.append(neo)
-        if len(list_of_100_neos) >= 100:
-            break
-# search_neo_dataset_for_sentry_asteroids()
+    # Use the GLOBAL keyword to treat a variable as 'static', meaning data will persist instead of resetting each time this function runs
+    global global_page_to_browse
+    global global_list_of_saved_NEOs
+    global global_list_of_saved_NEOs_in_Sentry 
+    global global_neo_multipage_dataset
+
+    while (len(global_list_of_saved_NEOs) < limit):
+
+        # Cycle through each page of the dataset
+        global_page_to_browse += 1
+        neo_api_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?page={global_page_to_browse}&size=20&api_key={api_key}"
+        r = requests.get(neo_api_url)
+        if r.status_code != 200:
+            raise RuntimeError(f"Sentry API request failed: {r.status_code} - {r.text}")
+        else:
+            print(f"Successfully access page {global_page_to_browse}")
+        page_of_NEOs_json = r.json()
+
+        # Update GLOBAL DICT of multi-paged dataset to include this page
+        global_neo_multipage_dataset.update(page_of_NEOs_json)
+
+        # Update GLOBAL lists of NEOs saved from the API dataset
+        neo_asteroids = page_of_NEOs_json['near_earth_objects']
+        for neo in neo_asteroids:
+            global_list_of_saved_NEOs.append(neo)
+            if neo['is_sentry_object']:
+                global_list_of_saved_NEOs_in_Sentry.append(neo)
+                print(f"\nFound a SENTRY object! {neo.get('id')}")
+            if len(global_list_of_saved_NEOs) >= limit:
+                print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
+                break
+        
+        # Avoid crashing NASA's server
+        time.sleep(0.1)
+        if len(global_list_of_saved_NEOs) >= limit:
+                print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
+                break
+
+#multipage_fetch_NEOs(5000)
 
 
 
+# TEST CODE
+# print(len(global_list_of_saved_NEOs))
+# print(global_list_of_saved_NEOs)
+
+# print(len(global_list_of_saved_NEOs_in_Sentry))
+
+# print(global_page_to_browse)
+
+# print(len(global_list_of_saved_NEOs))
+# print(len(global_list_of_saved_NEOs_in_Sentry))
+
+# for entry in global_list_of_saved_NEOs_in_Sentry: 
+#     print(global_list_of_saved_NEOs_in_Sentry['id'])
+# # / test code
 
 # -------------------------------------------------------- #
 # ----- SENTRY DATA WHERE AVAILABLE ------- #
@@ -220,6 +339,8 @@ def fetch_asteroid_dictionary(neo_id, api_key) -> dict:
     diameter_val = sentry_object_details_dict.get('diameter') if sentry_object_details_dict.get('diameter') is not None else fallback_diameter_m
         
     return {        
+        # WHEN ACCESSING DIAMETER:
+        # TRY GETTING 'diameter_m' if 'diameter_m' is not None else {'estimated_diameter_meters'}
         'designation': designation,
         'name': name,
         'id': neo_id,
@@ -319,7 +440,7 @@ def compute_kinetic_energy_Mt_from_massKG_and_velocityKPH(mass_kg, velocity_kph,
 # -------------------------------------------------------- #
 # ----- PRIORITY FUNCTION ------- #
 # -------------------------------------------------------- #
-def get_damage_from_neoID(neo_id) -> str:
+def get_damageString_from_neoID(neo_id) -> str:
     """
     INPUT: 'neo id' value for a given NEO. This could be obtained from 
             by calling on any NEO in:
@@ -353,6 +474,58 @@ def get_damage_from_neoID(neo_id) -> str:
 
     return output
 
+def get_damageData_from_neoID(neo_id) -> dict:
+    """
+    INPUT: 'neo id' value for a given NEO. This could be obtained from 
+            by calling on any NEO in:
+            requests.(neo_url).json()['near_earth_objects']['id']
+
+    RETURNS:
+        dict: 
+            'name': name,
+            'diameter': diameter_m,
+            'mass': mass_kg,
+            'velocity': velocity_infinity_kps,
+            'energy': kinetic_Energy_Mt,
+            'isPredicted': isPredicted,
+            'ip': impact_probability
+    """
+    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    name = asteroid.get('name')
+    diameter_m = asteroid.get('estimated_diameter_meters')
+    mass_kg = asteroid.get('mass_kg')
+    velocity_infinity_kps = asteroid.get('v_inf_kps')
+    kinetic_Energy_Mt = asteroid.get('energy_Mt')
+    isPredicted = False
+    if asteroid.get('ip') is not None:
+        isPredicted = True
+    impact_probability = asteroid.get('ip') if isPredicted else {None}
+
+    final_data = {
+        'name': name,
+        'diameter': diameter_m,
+        'mass': mass_kg,
+        'velocity': velocity_infinity_kps,
+        'energy': kinetic_Energy_Mt,
+        'isPredicted': isPredicted,
+        'ip': impact_probability
+    }
+
+    return final_data
+
+def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
+    """
+    INPUT: 'neo id' value for a given NEO. This could be obtained from 
+            by calling on any NEO in:
+            requests.(neo_url).json()['near_earth_objects']['id']
+
+    RETURNS:
+        float: Kinetic Energy on Impact (Megatons) 
+    """
+    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    kinetic_Energy_Mt = asteroid.get('energy_Mt')
+    
+    return kinetic_Energy_Mt
 
 
 
