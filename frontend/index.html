@@ -389,8 +389,8 @@
     <div> <h3>Impact Details:</h3>
         <ul id="impact-details">
             <li>Energy(Mt of TNT):</li>
-            <li>Crater Radius(km):</li>
-            <li>Velocity Upon Entry:</li>
+            <li>Over Pressure Radius(km):</li>
+            <li>Crater Radius(km)</li>
             <li>Resulting Earthquake Magnitude:</li>
             <li>Total Area Impacted(km<sup>2</sup>):</li>
             <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
@@ -583,8 +583,8 @@
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
             <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
-            <li>Blast Radius (4 psi): ${blastR_km} km</li>
-            <li>Velocity Upon Entry: ${neo.velocity / 1000} km/s</li>
+            <li>Crater Radius: ${} km/s</li>
+            <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
             <li>Resulting Earthquake Magnitude: TBD</li>
             <li>Total Area Impacted: TBD</li>
             <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
