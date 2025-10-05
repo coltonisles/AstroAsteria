@@ -111,10 +111,12 @@
         crossorigin=""></script>
 
 <script>
+    //NOTE: ADD AN INTRUCTION SECTION TO TELL USER THAT WAHT EACH CIRCLE REPRESENTS (NEEEDS TO ZOOM IN PRETTY CLOSE TO SEE CRATER CIRCLE)
     // --- GLOBAL VARIABLES (Must be declared outside DOMContentLoaded for proper scope) ---
     let map = null;
     let selectedMarker = null;
-    let impactCircle = null;
+    let blastCircle = null;
+    let craterCircle = null;
     let lastMapClickCoords = { lat: null, lon: null }; // Stores the last map click
     let currentlySelectedNeo = null; // Stores data for the selected meteor
     const ASSUMED_DENSITY = 3000; // kg/m^3 (Required for local calc)
@@ -125,6 +127,7 @@
     const BLAST_RADIUS_FACTOR = 2.5; // EIEP constant at 4psi (overpressure)
 
     // --- SIMULATED EXTERNAL DATABASE ---
+    //replace with actual backend hooks
     const ASTEROID_DB = {
         "1998 QE2": { r_ast: 5, velocity: 20000, density: ASSUMED_DENSITY, diameter_km: 0.01, mass_kg: 1e6, prob: "Low", date: "N/A" },
         "2023 JD4": { r_ast: 50, velocity: 15000, density: ASSUMED_DENSITY, diameter_km: 0.1, mass_kg: 1.5e7, prob: "Medium", date: "2050" },
@@ -136,6 +139,7 @@
     };
 
     // --- CORE CALCULATION (RESTORED TO MAKE FRONTEND FUNCTIONAL) ---
+    //blast radius is the radius in which the blast wave is reaches 4 psi(overpressure: destroy buildings, 3rd degree burns, rupture lungs)
     function calculateBlastRadius(asRad, V, rho){
         if(asRad <=0 || V <=0 || rho <=0){
             return 0;
@@ -163,56 +167,96 @@
         });
     }
 
-    // --- ANIMATION FUNCTION (Unchanged) ---
-    function animateCircle(circle, targetRadius, name) {
-        const duration = 1500;
+    // --- ANIMATION FUNCTION (Generalized to animate multiple layers) ---
+    /**
+     * Animates multiple Leaflet layers.
+     * @param {Array<Object>} animations - Array of {circle, targetRadius, duration} objects.
+     * @param {string} name - The name of the object being plotted.
+     */
+    function startAnimation(animations, name) {
+        const totalDuration = 1500; // Use the longest duration for the main loop
         const startTime = performance.now();
         const display = document.getElementById('neo-display');
+        let done = false;
 
         function step(currentTime) {
             const elapsedTime = currentTime - startTime;
-            const progress = Math.min(1, elapsedTime / duration);
+            let allFinished = true;
 
-            const currentRadius = targetRadius * progress;
-            circle.setRadius(currentRadius);
+            // Animate each item in the array
+            animations.forEach(anim => {
+                // Calculate progress based on the item's specific duration
+                const progress = Math.min(1, elapsedTime / anim.duration);
 
-            display.textContent = `Simulating: ${name} | Current Radius: ${Math.round(currentRadius / 1000)} km`;
+                if (progress < 1) {
+                    allFinished = false;
+                }
 
-            if (progress < 1) {
+                // Set the current radius
+                const currentRadius = anim.targetRadius * progress;
+                anim.circle.setRadius(currentRadius);
+
+                // Update display text only using the main blast radius animation (index 0)
+                if (anim.isMainBlast) {
+                    display.textContent = `Simulating: ${name} | Current Radius: ${(currentRadius / 1000).toFixed(2)} km`;
+                }
+            });
+
+
+            if (!allFinished) {
                 requestAnimationFrame(step);
-            } else {
-                display.textContent = `Plotted: ${name} | Final Radius: ${Math.round(targetRadius / 1000)} km`;
+            } else if (!done) {
+                // Animation complete, set final display text once
+                const finalRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
+                display.textContent = `Plotted: ${name} | Final Radius: ${finalRadiusKm} km`;
+                done = true;
             }
         }
         requestAnimationFrame(step);
     }
 
-    // --- PLOTTING FUNCTION (Refactored) ---
+    // --- PLOTTING FUNCTION  ---
     function plotSelected(neoData, maplat, maplon){
         if(!neoData || maplat === null || maplon === null || !map) {
             document.getElementById('neo-display').textContent = "ERROR: Please select a meteor AND click a map location.";
             return;
         }
 
-        const radius = neoData.calculated_radius; // Use the pre-calculated radius
+        const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
         const neoName = neoData.name;
+        const meteorPhysicalRad = neoData.r_ast;
 
         if(selectedMarker) map.removeLayer(selectedMarker);
-        if(impactCircle) map.removeLayer(impactCircle);
+        if(blastCircle) map.removeLayer(blastCircle);
+        if(craterCircle) map.removeLayer(craterCircle)
+
 
         map.setView([maplat, maplon], 5);
 
         selectedMarker = L.marker([maplat, maplon]).addTo(map)
             .bindPopup(`Impact Center: ${neoName}`).openPopup();
 
-        impactCircle = L.circle([maplat, maplon], {
+        blastCircle = L.circle([maplat, maplon], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.2,
             radius: 0 // Start animation from 0
         }).addTo(map);
 
-        animateCircle(impactCircle, radius, neoName);
+        craterCircle = L.circle([maplat, maplon], {
+            color: 'darkgray',
+            fillColor: '#888',
+            fillOpacity: 0.8,
+            radius: meteorPhysicalRad
+        }).addTo(map);
+
+        // Define the animations to run
+        const animations = [
+            { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
+            { circle: craterCircle, targetRadius: meteorPhysicalRad, duration: 200, isMainBlast: false }
+        ];
+
+        startAnimation(animations, neoName);
     }
 
     // --- FUNCTION TO POPULATE DETAILS ---
@@ -313,7 +357,7 @@
 
                 populateDetails(currentlySelectedNeo);
 
-                const r_km = Math.round(calculated_radius / 1000);
+                const r_km = (calculated_radius / 1000).toFixed(2);
                 display.textContent = `Selected: ${neoName} (Blast R: ${r_km} km). Click 'Simulate Impact'.`;
             }
         });
