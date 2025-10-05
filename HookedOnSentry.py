@@ -666,6 +666,8 @@ def get_next_approach_date_by_neoID(neo_id):
 # for j in top_10_ids:
 #     print(get_next_approach_date_by_neoID(j))
 
+
+# list_ = multipage_fetch_NEO_IDs()
 def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
     """
     INPUT = 'X' == HOW MANY?
@@ -686,9 +688,37 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
 
     return top_X_neo_IDs
 
+def send_db_to_html(list_of_ids):
+    data_dict = {}
+    
+    for neo_id in list_of_ids:
+        data_dict[neo_id] = fetch_asteroid_dictionary(neo_id)
+
+    return data_dict
+
+
+"""
+asteroid_db = {
+
+
+}
+"""
+
+# top_10_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(10)
+# def populate_ASTEROID_db_by_neo_IDs(neo_ids_list):
+    
+#     asteroid_DB = {}
+
+#     for each in neo_ids_list:
+#         asteroid_DB
+
+
+
+# asteroid_DB = populate_ASTEROID_db_by_neo_IDs()
 
 
 # if __name__ == "__main__":
+
 #     # print(get_damageString_from_neoID("3092161"))
 #     # print(get_damageString_from_neoID("2001566"))
 
@@ -704,6 +734,7 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
 #     plot_asteroid_dictionary(neo_3092161)
     # Test sorting
     # multipage_fetch_NEO_IDs(10)
+    # print(send_db_to_html(global_list_of_saved_NEO_IDs))
     # print(len(global_list_of_saved_NEO_IDs))
     # print(global_list_of_saved_NEO_IDs)
     
@@ -711,7 +742,7 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
     
 
  
-    # multipage_fetch_NEO_IDs(10)
+
     # # def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
     # #     """
     # #     INPUT = 'X' == HOW MANY?
@@ -731,9 +762,12 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
     # #     top_X_neo_IDs = [entry['neo_id'] for entry in top_X]
 
     # #     return top_X_neo_IDs
-    # print(global_list_of_saved_NEO_IDs)
-    # ten_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(10)
-    # print(ten_soonest_IDs)
+
+
+    multipage_fetch_NEO_IDs(10)
+    print(global_list_of_saved_NEO_IDs)
+    ten_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(100)
+    print(ten_soonest_IDs)
 
 
     
