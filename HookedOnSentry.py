@@ -10,6 +10,7 @@ import requests
 import pandas as pd
 import os, io
 import sys
+from datetime import datetime
 
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
@@ -46,6 +47,17 @@ print_all_data_for_asteroid_dict(asteroid_dict)
             fetch_asteroid_dictionary(neo_id, api_key)
     - OUTPUT:
         str:    Formatted string of the useful data
+#
+get_next_approach_date(dates_list)
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+        Input:
+            str[] -> The ['close_approach_date'] list from 
+                        (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+        
+        Return:
+            datetime -> The next (or most recent) 'close-approach'
 #
 get_impactEnergy_Mt_from_neoID(neo_id) -> float:
         - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
@@ -529,6 +541,58 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 
+## --- Get next close-approach-date -- ##
+def convert_approach_dates_to_DateTypeList(dates_list):
+    """
+    Input:
+        str[] -> The ['close_approach_date'] list from 
+                    (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+    Return:
+        datetime[] -> The same list, but as DATETIME objects instead of str
+    """
+    # Today
+    current_date = datetime.now()
+
+    # Convert the dates str[] to DATE[]
+    dates_AS_dates = []
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        dates_AS_dates.append(date_AS_date)
+
+    return dates_AS_dates
+
+def get_next_approach_date(dates_list):
+    """
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+    Input:
+        str[] -> The ['close_approach_date'] list from 
+                    (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+    
+    Return:
+        datetime -> The next (or most recent) 'close-approach'
+    """
+    # Today
+    current_date = datetime.now()
+
+    # Convert the dates str[] to DATE[]
+    previous_dates = []
+    next_approach_date = None
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        if (date_AS_date < current_date):
+            previous_dates.append(date_AS_date)
+        else:
+            next_approach_date = date_AS_date
+    
+    if next_approach_date is not None:
+        return next_approach_date
+    else:
+        # Return the most recent approach if no predicted future approach
+        return previous_dates[-1]
+
+
 
 # TEST ASTEROID: 3092161
 # neo3092161 = fetch_asteroid_dictionary("3092161")
@@ -545,8 +609,40 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 if __name__ == "__main__":
-    print(get_damageString_from_neoID("3092161"))
-    print(get_damageString_from_neoID("2001566"))
+    # print(get_damageString_from_neoID("3092161"))
+    # print(get_damageString_from_neoID("2001566"))
 
-    plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
-    plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
+    # plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
+    # plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
+
+    neo_2001566 = fetch_asteroid_dictionary("2001566")
+    neo_3092161 = fetch_asteroid_dictionary("3092161")
+
+
+    # What is 'dates[]' like again?
+    # try:
+    #     print(neo_2001566.get('close_approach_date'))
+    # except:
+    #     print("neo.get(\'close_approach_date\') didn't work")
+    
+    # try:
+    #     print(neo_2001566['close_approach_date'])
+    # except:
+    #     print("neo\'close_approach_date\'] didn't work")
+    # They both work:
+    # ['1902-06-11', '1914-08-09', '1921-06-15', '1928-02-18', '1939-06-14', '1940-06-09', '1940-06-20', '1949-04-19', 
+    #  '1949-06-11', '1952-09-29', '1965-01-19', '1968-04-25', '1968-06-14', '1977-05-11', '1986-06-18', '1987-05-05', 
+    #  '1987-06-21', '1989-09-01', '1996-06-11', '2015-06-16', '2025-05-24', '2033-04-30', '2043-06-13', '2044-06-04', 
+    #  '2045-08-21', '2057-12-11', '2062-06-18', '2070-04-02', '2071-06-10', '2074-11-13', '2082-07-24', '2090-06-14', 
+    #  '2094-11-14', '2109-06-19', '2117-03-05', '2118-06-11', '2121-11-20', '2136-03-13', '2137-06-15', '2138-07-13', 
+    #  '2150-11-01', '2156-06-18', '2163-02-21', '2163-04-10', '2170-11-17', '2175-06-12', '2175-06-23', '2184-06-13', 
+    #  '2187-10-02', '2200-01-21']
+
+
+
+    # test
+    print(get_next_approach_date(neo_2001566['close_approach_date']))
+    print(get_next_approach_date(neo_3092161['close_approach_date']))
+
+
+    
