@@ -166,10 +166,12 @@ def multipage_fetch_NEO_IDs(limit=5000):
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
 
-multipage_fetch_NEO_IDs(50)
-print(len(global_list_of_saved_NEO_IDs))
-print("\n")
-print(global_list_of_saved_NEO_IDs)
+# multipage_fetch_NEO_IDs(50)
+# print(len(global_list_of_saved_NEO_IDs))
+# print("\n")
+# list_of_approach_dates
+
+
 
 
 
@@ -615,24 +617,29 @@ def get_next_approach_date_by_neoID(neo_id):
     current_date = datetime.now()
 
     neo_dict = fetch_asteroid_dictionary(neo_id)
-    dates_list = neo_dict['close_approach_date']
+    dates_list = neo_dict.get('close_approach_date', [])
 
-    # Convert the dates str[] to DATE[]
-    previous_dates = []
-    next_approach_date = None
-    for date in dates_list:
-        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
-        if (date_AS_date < current_date):
-            previous_dates.append(date_AS_date)
-        else:
-            next_approach_date = date_AS_date
-    
-    if next_approach_date is not None:
-        return next_approach_date
-    else:
-        # Return the most recent approach if no predicted future approach
-        return previous_dates[-1]
+    if not dates_list:
+        return None  # No dates available
 
+    # Convert string dates to datetime objects
+    dates_as_datetime = [datetime.strptime(date, '%Y-%m-%d') for date in dates_list]
+
+    # Sort dates in ascending order
+    dates_as_datetime.sort()
+
+    # Find earliest future date
+    future_dates = [d for d in dates_as_datetime if d >= current_date]
+    if future_dates:
+        return future_dates[0]
+
+    # If no future dates, return the most recent past date
+    past_dates = [d for d in dates_as_datetime if d < current_date]
+    if past_dates:
+        return past_dates[-1]
+
+    # Fallback
+    return None
 
 # TEST ASTEROID: 3092161
 # neo3092161 = fetch_asteroid_dictionary("3092161")
@@ -643,8 +650,41 @@ def get_next_approach_date_by_neoID(neo_id):
 
 
 
+# Test sorting
+# multipage_fetch_NEO_IDs(10)
+# print(global_list_of_saved_NEO_IDs)
+# for entry in global_list_of_saved_NEO_IDs:
+#     print(get_next_approach_date_by_neoID(entry))
+# results = []
+# for neo_id in global_list_of_saved_NEO_IDs:
+#     date = get_next_approach_date(neo_id)
+#     results.append({'id': neo_id, 'date': date})
+# results.sort(key=lambda x: x['date'])
 
+# top_10_ids = [entry['id'] for entry in results[:10]]
+# print(top_10_ids)
+# for j in top_10_ids:
+#     print(get_next_approach_date_by_neoID(j))
 
+def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
+    """
+    INPUT = 'X' == HOW MANY?
+
+    RETURNS LIST OF TOP 10 (soonest approaching) NEO IDs
+    """
+    top_X = []
+    for i in global_list_of_saved_NEO_IDs[:10]:
+        approach_date_i = get_next_approach_date_by_neoID(i)
+        # print(approach_date_i)
+        top_X.append({'neo_id': i, 'next_approach': approach_date_i})
+    top_X.sort(key=lambda x: x['next_approach'])
+    for entry in top_X:
+        print(entry['neo_id'])
+        print(entry['next_approach'])
+
+    top_X_neo_IDs = [entry['neo_id'] for entry in top_X]
+
+    return top_X_neo_IDs
 
 
 
@@ -662,6 +702,40 @@ def get_next_approach_date_by_neoID(neo_id):
 #     # test
 #     plot_asteroid_dictionary(neo_2001566)
 #     plot_asteroid_dictionary(neo_3092161)
+    # Test sorting
+    # multipage_fetch_NEO_IDs(10)
+    # print(len(global_list_of_saved_NEO_IDs))
+    # print(global_list_of_saved_NEO_IDs)
+    
 
+    
+
+ 
+    # multipage_fetch_NEO_IDs(10)
+    # # def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
+    # #     """
+    # #     INPUT = 'X' == HOW MANY?
+
+    # #     RETURNS LIST OF TOP 10 (soonest approaching) NEO IDs
+    # #     """
+    # #     top_X = []
+    # #     for i in global_list_of_saved_NEO_IDs[:10]:
+    # #         approach_date_i = get_next_approach_date_by_neoID(i)
+    # #         # print(approach_date_i)
+    # #         top_X.append({'neo_id': i, 'next_approach': approach_date_i})
+    # #     top_X.sort(key=lambda x: x['next_approach'])
+    # #     for entry in top_X:
+    # #         print(entry['neo_id'])
+    # #         print(entry['next_approach'])
+
+    # #     top_X_neo_IDs = [entry['neo_id'] for entry in top_X]
+
+    # #     return top_X_neo_IDs
+    # print(global_list_of_saved_NEO_IDs)
+    # ten_soonest_IDs = get_X_soonest_approaching_neo_IDs_from_global_list(10)
+    # print(ten_soonest_IDs)
+
+
+    
 
     
