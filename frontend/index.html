@@ -493,12 +493,21 @@
     // --- MAIN EXECUTION ---
     document.addEventListener('DOMContentLoaded', function() {
 
+        const WORLD_BOUNDS = [
+            [-90, -180],
+            [90, 180]
+        ];
+
         const plotBtn = document.getElementById('plotBtn');
         const display = document.getElementById('neo-display');
         const list = document.getElementById('neo-list');
 
         //Initialize Map
-        map = L.map('map', {minZoom: 3}).setView([10, 0], 2);
+        map = L.map('map', {
+            minZoom: 3,
+            maxBounds: WORLD_BOUNDS,
+            maxBoundsViscosity: 1.0
+        }).setView([10, 0], 2);
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
