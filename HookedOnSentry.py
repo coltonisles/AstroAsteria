@@ -552,24 +552,24 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 ## --- Get next close-approach-date -- ##
-def convert_approach_dates_to_DateTypeList(dates_list):
-    """
-    Input:
-        str[] -> The ['close_approach_date'] list from 
-                    (fetch_asteroid_dictionary(neo_id))['close_approach_date']
-    Return:
-        datetime[] -> The same list, but as DATETIME objects instead of str
-    """
-    # Today
-    current_date = datetime.now()
+# def convert_approach_dates_to_DateTypeList(dates_list):
+#     """
+#     Input:
+#         str[] -> The ['close_approach_date'] list from 
+#                     (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+#     Return:
+#         datetime[] -> The same list, but as DATETIME objects instead of str
+#     """
+#     # Today
+#     current_date = datetime.now()
 
-    # Convert the dates str[] to DATE[]
-    dates_AS_dates = []
-    for date in dates_list:
-        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
-        dates_AS_dates.append(date_AS_date)
+#     # Convert the dates str[] to DATE[]
+#     dates_AS_dates = []
+#     for date in dates_list:
+#         date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+#         dates_AS_dates.append(date_AS_date)
 
-    return dates_AS_dates
+#     return dates_AS_dates
 
 def get_next_approach_date(dates_list):
     """
@@ -602,97 +602,144 @@ def get_next_approach_date(dates_list):
         # Return the most recent approach if no predicted future approach
         return previous_dates[-1]
 
+
 def get_next_approach_date_by_neoID(neo_id):
     """
-    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
-    Return the most recent approach if no predicted future approach.
-
-    Input:
-        str -> neo_id
-    
-    Return:
-        datetime -> The next (or most recent) 'close-approach'
+    Return next or most recent 'close approach' as a date string (YYYY-MM-DD), or None.
     """
-    # Today
-    current_date = datetime.now()
+    current_date_str = datetime.now().strftime('%Y-%m-%d')
 
     neo_dict = fetch_asteroid_dictionary(neo_id)
     dates_list = neo_dict.get('close_approach_date', [])
 
     if not dates_list:
-        return None  # No dates available
+        return None
 
-    # Convert string dates to datetime objects
-    dates_as_datetime = [datetime.strptime(date, '%Y-%m-%d') for date in dates_list]
+    dates_list.sort()  # sorts strings lex order as dates if in ISO format
 
-    # Sort dates in ascending order
-    dates_as_datetime.sort()
-
-    # Find earliest future date
-    future_dates = [d for d in dates_as_datetime if d >= current_date]
+    future_dates = [d for d in dates_list if d >= current_date_str]
     if future_dates:
         return future_dates[0]
 
-    # If no future dates, return the most recent past date
-    past_dates = [d for d in dates_as_datetime if d < current_date]
+    past_dates = [d for d in dates_list if d < current_date_str]
     if past_dates:
         return past_dates[-1]
 
-    # Fallback
     return None
 
-# TEST ASTEROID: 3092161
-# neo3092161 = fetch_asteroid_dictionary("3092161")
-# print_all_data_for_asteroid_dict(neo3092161)
-# plot_asteroid_dictionary(neo3092161)
-# print(neo3092161.get('is_sentry_object'))
-# get_damageString_from_neoID("3092161")
 
-
-
-# Test sorting
-# multipage_fetch_NEO_IDs(10)
-# print(global_list_of_saved_NEO_IDs)
-# for entry in global_list_of_saved_NEO_IDs:
-#     print(get_next_approach_date_by_neoID(entry))
-# results = []
-# for neo_id in global_list_of_saved_NEO_IDs:
-#     date = get_next_approach_date(neo_id)
-#     results.append({'id': neo_id, 'date': date})
-# results.sort(key=lambda x: x['date'])
-
-# top_10_ids = [entry['id'] for entry in results[:10]]
-# print(top_10_ids)
-# for j in top_10_ids:
-#     print(get_next_approach_date_by_neoID(j))
-
-
-# list_ = multipage_fetch_NEO_IDs()
 def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
     """
-    INPUT = 'X' == HOW MANY?
-
-    RETURNS LIST OF TOP 10 (soonest approaching) NEO IDs
+    Returns list of top X soonest approaching NEO IDs by sorting date strings.
     """
     top_X = []
-    for i in global_list_of_saved_NEO_IDs[:10]:
+    for i in global_list_of_saved_NEO_IDs[:limit]:
         approach_date_i = get_next_approach_date_by_neoID(i)
-        # print(approach_date_i)
         top_X.append({'neo_id': i, 'next_approach': approach_date_i})
-    top_X.sort(key=lambda x: (x['next_approach'] is None, x['next_approach']))
+
+    # Sort by date string; treat None as very large to push to end
+    top_X.sort(key=lambda x: x['next_approach'] if x['next_approach'] is not None else '9999-12-31')
+
     for entry in top_X:
         print(entry['neo_id'])
         print(entry['next_approach'])
 
     top_X_neo_IDs = [entry['neo_id'] for entry in top_X]
-
     return top_X_neo_IDs
+
+# def get_next_approach_date_by_neoID(neo_id):
+#     """
+#     Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+#     Return the most recent approach if no predicted future approach.
+
+#     Input:
+#         str -> neo_id
+    
+#     Return:
+#         datetime -> The next (or most recent) 'close-approach'
+#     """
+#     # Today
+#     current_date = datetime.now()
+
+#     neo_dict = fetch_asteroid_dictionary(neo_id)
+#     dates_list = neo_dict.get('close_approach_date', [])
+
+#     if not dates_list:
+#         return None  # No dates available
+
+#     # Convert string dates to datetime objects
+#     dates_as_datetime = [datetime.strptime(date, '%Y-%m-%d') for date in dates_list]
+
+#     # Sort dates in ascending order
+#     dates_as_datetime.sort()
+
+#     # Find earliest future date
+#     future_dates = [d for d in dates_as_datetime if d >= current_date]
+#     if future_dates:
+#         return future_dates[0]
+
+#     # If no future dates, return the most recent past date
+#     past_dates = [d for d in dates_as_datetime if d < current_date]
+#     if past_dates:
+#         return past_dates[-1]
+
+#     # Fallback
+#     return None
+
+# # TEST ASTEROID: 3092161
+# # neo3092161 = fetch_asteroid_dictionary("3092161")
+# # print_all_data_for_asteroid_dict(neo3092161)
+# # plot_asteroid_dictionary(neo3092161)
+# # print(neo3092161.get('is_sentry_object'))
+# # get_damageString_from_neoID("3092161")
+
+
+
+# # Test sorting
+# # multipage_fetch_NEO_IDs(10)
+# # print(global_list_of_saved_NEO_IDs)
+# # for entry in global_list_of_saved_NEO_IDs:
+# #     print(get_next_approach_date_by_neoID(entry))
+# # results = []
+# # for neo_id in global_list_of_saved_NEO_IDs:
+# #     date = get_next_approach_date(neo_id)
+# #     results.append({'id': neo_id, 'date': date})
+# # results.sort(key=lambda x: x['date'])
+
+# # top_10_ids = [entry['id'] for entry in results[:10]]
+# # print(top_10_ids)
+# # for j in top_10_ids:
+# #     print(get_next_approach_date_by_neoID(j))
+
+
+# # list_ = multipage_fetch_NEO_IDs()
+# def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
+#     """
+#     INPUT = 'X' == HOW MANY?
+
+#     RETURNS LIST OF TOP 10 (soonest approaching) NEO IDs
+#     """
+#     top_X = []
+#     for i in global_list_of_saved_NEO_IDs[:10]:
+#         approach_date_i = get_next_approach_date_by_neoID(i)
+#         # print(approach_date_i)
+#         top_X.append({'neo_id': i, 'next_approach': approach_date_i})
+#     top_X.sort(key=lambda x: (x['next_approach'] is None, x['next_approach']))
+    
+#     for entry in top_X:
+#         print(entry['neo_id'])
+#         print(entry['next_approach'])
+
+#     top_X_neo_IDs = [entry['neo_id'] for entry in top_X]
+
+#     return top_X_neo_IDs
 
 def send_db_to_html(list_of_ids):
     data_dict = {}
     
     for neo_id in list_of_ids:
         data_dict[neo_id] = fetch_asteroid_dictionary(neo_id)
+
 
     return data_dict
 
@@ -717,19 +764,19 @@ asteroid_db = {
 # asteroid_DB = populate_ASTEROID_db_by_neo_IDs()
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    multipage_fetch_NEO_IDs(3)
-    data_dict = send_db_to_html(global_list_of_saved_NEO_IDs)
-    import json
+#     multipage_fetch_NEO_IDs(3)
+#     data_dict = send_db_to_html(global_list_of_saved_NEO_IDs)
+#     import json
 
-    try:
-        json.dumps(data_dict)  # Test if serializable
-        print("success")
-    except TypeError as e:
-        print("Serialization error:", e)
+#     try:
+#         json.dumps(data_dict)  # Test if serializable
+#         print("success")
+#     except TypeError as e:
+#         print("Serialization error:", e)
     
-    print(data_dict)
+#     print(data_dict)
 
 #     # print(get_damageString_from_neoID("3092161"))
 #     # print(get_damageString_from_neoID("2001566"))
