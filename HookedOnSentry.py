@@ -48,13 +48,12 @@ print_all_data_for_asteroid_dict(asteroid_dict)
     - OUTPUT:
         str:    Formatted string of the useful data
 #
-get_next_approach_date(dates_list)
+get_next_approach_date_by_neoID(neo_id)
     Get the next upcoming 'close approach' according to the NASA API NEO dataset.
     Return the most recent approach if no predicted future approach.
 
         Input:
-            str[] -> The ['close_approach_date'] list from 
-                        (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+            str[] -> The 'neo_id' of a NEO from the NASA NEO API
         
         Return:
             datetime -> The next (or most recent) 'close-approach'
@@ -592,6 +591,38 @@ def get_next_approach_date(dates_list):
         # Return the most recent approach if no predicted future approach
         return previous_dates[-1]
 
+def get_next_approach_date_by_neoID(neo_id):
+    """
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+    Input:
+        str -> neo_id
+    
+    Return:
+        datetime -> The next (or most recent) 'close-approach'
+    """
+    # Today
+    current_date = datetime.now()
+
+    neo_dict = fetch_asteroid_dictionary(neo_id)
+    dates_list = neo_dict['close_approach_date']
+
+    # Convert the dates str[] to DATE[]
+    previous_dates = []
+    next_approach_date = None
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        if (date_AS_date < current_date):
+            previous_dates.append(date_AS_date)
+        else:
+            next_approach_date = date_AS_date
+    
+    if next_approach_date is not None:
+        return next_approach_date
+    else:
+        # Return the most recent approach if no predicted future approach
+        return previous_dates[-1]
 
 
 # TEST ASTEROID: 3092161
