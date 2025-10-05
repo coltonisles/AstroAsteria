@@ -249,11 +249,13 @@
         gap: 40px;
         margin-top: 20px;
         margin-left: 15px;
+        flex-wrap: wrap;
     }
     #details-container > div
     {
         flex:1;
         min-width: 250px;
+        box-sizing: border-box;
     }
     #details-container ul
     {
@@ -281,6 +283,18 @@
         color: #666;
         font-style: italic;
     }
+
+    /* Responsive behavior: stack items vertically on smaller screens */
+    @media (max-width: 900px) {
+    #details-container {
+        flex-direction: column; /* stack vertically */
+        gap: 20px; /* reduce gap between sections */
+    }
+
+    #details-container > div {
+        width: 100%; /* make each section full width */
+    }
+}
 
     /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
        for the Impact Radius, so no :nth-child styles are needed here. */
