@@ -1,0 +1,373 @@
+#TODO: Make the output graph better
+#TODO: Make the get_damage() output string better ('.2f')
+#TODO: Clean this code to make it NASA-worthy
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+import time
+import requests
+import pandas as pd
+import os, io
+import sys
+
+api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
+neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
+
+
+"""
+The main FETCH functions only pull 1 PAGE at a time, out of who knows how many pages...
+So this below function should recursively browse (all?) the pages, until a defined
+limit is reached. 
+
+Not calling it yet though (commented-out) because it's slow. (I did confirm that it works though)
+"""
+# Preparing lists to store NEOs. Including separate lists for their IDs 
+list_of_100_neos = []
+list_of_neos_in_Sentry = []
+
+def search_neo_dataset_for_sentry_asteroids(limit=100):
+    """
+    This function recurssively browses all of the pages of the NASA NEO api dataset, and adds each NEO to 
+    'list_of_100_neos' until a defined limit (default = 100)
+
+    If a NEO is ALSO in the NASA SENTRY API, it will be added to 'list_of_neos_in_Sentry' for easy reference
+    for simulations that would benefit from the Sentry data.
+
+    Params:
+    limit: int  = a max size for the list_of_neos[]
+
+    Returns:
+    N/A -> fills the gloabal lists
+    """
+    page +=1
+    reccursive_neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?page={page}&size=20&api_key={api_key}"
+    neo_response = requests.get(reccursive_neo_url)
+    neo_data = neo_response.json()
+    neo_asteroids = neo_data['near_earth_objects']
+    for neo in neo_asteroids:
+        list_of_100_neos.append(neo)
+        if neo['is_sentry_object']:
+            list_of_neos_in_Sentry.append(neo)
+        if len(list_of_100_neos) >= 100:
+            break
+# search_neo_dataset_for_sentry_asteroids()
+
+
+
+
+# -------------------------------------------------------- #
+# ----- SENTRY DATA WHERE AVAILABLE ------- #
+# -------------------------------------------------------- #
+def fetch_sentry_data_from_url(sentry_url):
+    """
+    One field in the original NEO data is 'is_sentry_object'. If true, an additional field is present called 'sentry_data_url', linking
+    to the Sentry API. This function fetches the Sentry data from that URL.
+    1. sentry_url: str - The URL to fetch Sentry data from.
+
+    Returns:
+    dict - The JSON response from the Sentry API as a dictionary.
+    """
+    resp = requests.get(sentry_url)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
+    sentry_response = resp.json()
+    return sentry_response
+
+def fetch_sentry_object_details_from_des(sentry_designation):
+    """
+    The above Sentry API hook does not actually include the 'ENERGY' field... 
+    BUT
+    That is accessible through another URL in this function.
+    1. sentry_designation: str - 'designation' value, which would be found in the above function.
+
+    Returns:
+    dict - The JSON response from the Sentry API for the specific designation as a dictionary.
+    """
+    # example: "https://ssd-api.jpl.nasa.gov/sentry.api?des=1997 TC25"
+    url = "https://ssd-api.jpl.nasa.gov/sentry.api?des=" + sentry_designation
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Sentry API request failed: {resp.status_code} - {resp.text}")
+    sentry_object_details_json = resp.json()    
+    return sentry_object_details_json
+
+
+# -------------------------------------------------------- #
+# ----- NEO DATA FETCH AND PLOT ------- #
+# -------------------------------------------------------- #
+# -- FULL ASTEROID DATA FETCH -- #
+def fetch_asteroid_dictionary(neo_id, api_key) -> dict:
+    """
+    This has been expanded to include the link to the SBDB details.
+    If the asteroid IS a Sentry object, it will also fetch the Sentry data by following the breadcrumbs
+    to the url that is appended to any Sentry objects in this dataset ('is_sentry_object' has always been
+    a field, and if 'true', an additional url is provided to link to THAT asteroid's SENTRY data).
+
+    1. neo_id: str - The NEO ID of the asteroid to fetch.
+    2. api_key: str - Your NASA API key.
+
+    Returns:
+    dict - A dictionary containing the asteroid's details, including close approach data and Sentry data where available
+    {} FIELDS:
+        'designation': str
+        'name': str
+        'id': str
+        'neo_reference_id': str
+        'nasa_jpl_url': str
+        'absolute_magnitude_h': float 
+        'estimated_diameter_meters': float
+        'close_approach_date': str[]
+        'relative_velocity_kph': float (km/h)
+        'miss_distance_au': NOT USED - COULD ADD A CONVERSION FACTOR IF WE WANT
+        'miss_distance_km': float (proximity to Earth during 'close approach' events)
+        'is_sentry_object': bool (does it have Sentry data?)
+        'sentry_data_url': str (if it does, where is it?)
+        'sentry_dict': dict (here it is)
+        'sentry_object_dict': dict (more data that includes ENERGY(Mt))
+        'v_inf_kps': float (Velocity_infinity (km/s))
+        'energy_Mt': float (impact Kinetic Energy (Megatons))
+        'mass_kg': float (mass (kg))
+        'ip':  float (impact probability)
+        'diameter_m': (SENTRY diameter (m))
+    """
+    # First, fetch the NEO data
+    resp = requests.get(f"https://api.nasa.gov/neo/rest/v1/neo/{neo_id}?api_key={api_key}")
+    if resp.status_code != 200:
+        raise RuntimeError(f"NEO API request failed: {resp.status_code} - {resp.text}")
+    neo_response = resp.json()
+    
+    # Now, harvest the original NEO fields
+    designation = neo_response['designation']
+    name = neo_response['name']
+    neo_id = neo_response['id']
+    neo_ref_id = neo_response['neo_reference_id']
+    absolute_magnitude_h = neo_response['absolute_magnitude_h']
+
+    # Compute estimated diameter in meters (average of min and max)
+    estimated_diameter_min_meters = neo_response['estimated_diameter']['meters']['estimated_diameter_min']  # in meters
+    estimated_diameter_max_meters = neo_response['estimated_diameter']['meters']['estimated_diameter_max']  # in meters
+    estimated_diameter_meters = (estimated_diameter_min_meters + estimated_diameter_max_meters) / 2  # average diameter in meters
+
+    dates = []
+    velocities_kph = []
+    miss_dist_au = []
+    miss_dist_km = []
+
+    for event in neo_response['close_approach_data']:
+        dates.append(event['close_approach_date'])
+        velocities_kph.append(float(event['relative_velocity']['kilometers_per_hour']))
+        miss_dist_au.append(float(event['miss_distance']['astronomical']))
+        miss_dist_km.append(float(event['miss_distance']['kilometers']))
+    
+    # hook into SBDB (ssd.jpl.nasa.gov) to get diameter, albedo, absolute magnitude, etc
+    nasa_jpl_url = neo_response['nasa_jpl_url']
+
+    # Hook into SENTRY (if available)
+    sentry_data_url = None
+    sentry_dict = {}
+    is_sentry_object = neo_response['is_sentry_object']
+    if is_sentry_object:
+        # This field does not exist if 'is_sentry_object' is false
+        sentry_data_url = neo_response['sentry_data']
+        sentry_json = fetch_sentry_data_from_url(sentry_data_url)   # returns the fetched request.get().json()
+        print("...\n")
+
+        # Now, harvest the Sentry fields
+        sentry_dict['spkId'] = sentry_json['spkId']
+        sentry_dict['fullname'] = sentry_json['fullname']
+        sentry_dict['designation'] = sentry_json['designation']
+        sentry_dict['sentryId'] = sentry_json['sentryId']
+        sentry_dict['v_infinity'] = float(sentry_json['v_infinity'])  # in km/s
+        sentry_dict['estimated_diameter'] = float(sentry_json['estimated_diameter'])  # in meters
+        sentry_dict['absolute_magnitude'] = float(sentry_json['absolute_magnitude'])
+        sentry_dict['palermo_scale_ave'] = float(sentry_json['palermo_scale_ave'])
+        sentry_dict['impact_probability'] = float(sentry_json['impact_probability'])
+        sentry_dict['is_active_sentry_object'] = sentry_json['is_active_sentry_object']
+        sentry_dict['url_impact_details'] = sentry_json['url_impact_details']
+    
+        # Let's go deeper... a hook within a hook... hookception... 
+        # Access the Object Table for ENERGY and MASS directly, instead of computing.
+        sentry_object_details_json = fetch_sentry_object_details_from_des(sentry_dict['designation'])
+        #        
+        print("....")    
+        sentry_object_details_dict = {}
+        if 'data' in sentry_object_details_json and len(sentry_object_details_json['data']) > 0:        
+            sentry_object_details_dict['mass'] = float(sentry_object_details_json['summary']['mass'])  # in kg
+            sentry_object_details_dict['v_inf'] = float(sentry_object_details_json['summary'].get('v_inf', None))  # in km/s
+            sentry_object_details_dict['ip'] = float(sentry_object_details_json['summary']['ip'])  # impact probability
+            sentry_object_details_dict['energy'] = float(sentry_object_details_json['summary'].get('energy', None))  # in Mt
+            sentry_object_details_dict['diameter'] = float(sentry_object_details_json['summary']['diameter'])  / 1000 # in m
+        
+    # compute numeric fallbacks (used when Sentry data not present)
+    avg_velocity_kph = compute_average_velocity(velocities_kph) if velocities_kph else None    
+    fallback_mass_kg = compute_mass_kg_from_diameter(estimated_diameter_meters)
+    fallback_v_inf_kps = (avg_velocity_kph / 3600.0) if avg_velocity_kph is not None else None
+    fallback_energy_Mt = (compute_kinetic_energy_Mt_from_massKG_and_velocityKPH(fallback_mass_kg, avg_velocity_kph)
+                            if avg_velocity_kph is not None else None)
+    fallback_ip = None
+    fallback_diameter_m = estimated_diameter_meters
+
+
+    # Patch to fix the NESTED IF problem of a dict not being created, leading to too many 'None' values instead of the above fallbacks:
+    if 'sentry_object_details_dict' not in locals():
+        sentry_object_details_dict = {}
+    # choose numeric values from Sentry if present, otherwise use computed fallbacks
+    v_inf_val = sentry_object_details_dict.get('v_inf') if sentry_object_details_dict.get('v_inf') is not None else fallback_v_inf_kps
+    energy_val = sentry_object_details_dict.get('energy') if sentry_object_details_dict.get('energy') is not None else fallback_energy_Mt
+    mass_val = sentry_object_details_dict.get('mass') if sentry_object_details_dict.get('mass') is not None else fallback_mass_kg
+    ip_val = sentry_object_details_dict.get('ip') if sentry_object_details_dict.get('ip') is not None else fallback_ip
+    diameter_val = sentry_object_details_dict.get('diameter') if sentry_object_details_dict.get('diameter') is not None else fallback_diameter_m
+        
+    return {        
+        'designation': designation,
+        'name': name,
+        'id': neo_id,
+        'neo_reference_id': neo_ref_id,
+        'nasa_jpl_url': nasa_jpl_url,
+        'absolute_magnitude_h': absolute_magnitude_h,
+        'estimated_diameter_meters': estimated_diameter_meters,
+        'close_approach_date': dates,
+        'relative_velocity_kph': velocities_kph,
+        'miss_distance_au': miss_dist_au,
+        'miss_distance_km': miss_dist_km,
+        'is_sentry_object': is_sentry_object,
+        'sentry_data_url': sentry_data_url,
+        'sentry_dict': sentry_dict,
+        'sentry_object_dict': sentry_object_details_dict if is_sentry_object else {},
+        #
+        #
+        'v_inf_kps': v_inf_val,
+        'energy_Mt': energy_val,
+        'mass_kg': mass_val,
+        'ip':  ip_val,
+        'diameter_m': diameter_val
+    }
+
+# -- plot the RETURNED DICTIONARY from 'fetch_asteroid_dictionary(neo_id, api_key)' -- #
+def plot_asteroid_dictionary(asteroid_dict):
+    plt.figure(figsize=(10, 5))
+    plt.plot(asteroid_dict['close_approach_date'], asteroid_dict['miss_distance_km'], marker='o')
+    plt.xlabel('Close Approach Date')
+    plt.ylabel('Miss Distance (km)')
+    plt.title(f'Asteroid {asteroid_dict["name"]} Miss Distance Over Time')
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+# -------------------------------------------------------- #
+# ----- toString() ------- #
+def print_all_data_for_asteroid_dict(asteroid_dict):
+    """
+    INPUT:
+        asteroid_dict: dict.json() 
+
+    An organized, neater way to see the data pulled from the API for a particular asteroid
+    """
+    for key, value in asteroid_dict.items():
+        print(f"\n{key}: {value}")
+
+
+
+# -------------------------------------------------------- #
+# ----- MATH FOR WHEN SENTRY != AVAILABLE ------- #
+# -------------------------------------------------------- #
+
+def compute_average_velocity(velocities_list):
+    return ( sum(velocities_list) / len(velocities_list) )
+
+def compute_mass_kg_from_diameter(estimated_diameter_meters, density_g_cm3=2.6):
+    # Convert diameter from meters to centimeters
+    diameter_cm = estimated_diameter_meters * 100
+    radius_cm = diameter_cm / 2
+    volume_cm3 = (4/3) * np.pi * (radius_cm ** 3)
+    density_kg_m3 = density_g_cm3 * 1000  # Convert g/cm^3 to kg/m^3
+    mass_kg = density_kg_m3 * (volume_cm3 / 1e6)  # Convert cm^3 to m^3 for mass calculation
+    return mass_kg
+
+def compute_kinetic_energy_Mt_from_massKG_and_velocityKPH(mass_kg, velocity_kph, *, return_unit='Mt'):
+    """
+    Compute kinetic energy from mass (kg) and velocity (km/h).
+
+    This is an embarresingly low-level computation that does not factor in the effect of the atmosphere,
+    additional gravitational pulls, angle of approach, etc, because it is a simple overnight thought.
+
+    return_unit options: 'Mt' (megatons), 'tons' (metric tons), or 'J' (joules).
+    """
+    try:
+        m = float(mass_kg)
+        v_kph = float(velocity_kph)
+    except (TypeError, ValueError):
+        return None
+    
+    # protect against negative values (use absolute velocity, mass should be non-negative)
+    if m < 0:
+        return None
+    v_m_s = abs(v_kph) / 3.6  # km/h -> m/s
+
+    ke_joules = 0.5 * m * (v_m_s ** 2)
+
+    if return_unit == 'Mt':
+        return ke_joules / 4.184e15
+    if return_unit == 'tons':
+        return ke_joules / 4.184e9
+    return ke_joules
+
+
+
+# -------------------------------------------------------- #
+# ----- PRIORITY FUNCTION ------- #
+# -------------------------------------------------------- #
+def get_damage_from_neoID(neo_id) -> str:
+    """
+    INPUT: 'neo id' value for a given NEO. This could be obtained from 
+            by calling on any NEO in:
+            requests.(neo_url).json()['near_earth_objects']['id']
+
+    RETURNS:
+    str: Text based damage display in the event of impact.
+    """
+    asteroid = fetch_asteroid_dictionary(neo_id, api_key)
+    name = asteroid.get('name')
+    diameter_m = asteroid.get('estimated_diameter_meters')
+    mass_kg = asteroid.get('mass_kg')
+    velocity_infinity_kps = asteroid.get('v_inf_kps')
+    kinetic_Energy_Mt = asteroid.get('energy_Mt')
+    isPredicted = False
+    if asteroid.get('ip') is not None:
+        isPredicted = True
+    impact_probability = asteroid.get('ip') if isPredicted else {None}
+
+    # Build a string to explain the damage
+    output = "BOOM!\n..."
+    output += f"Asteroid {name}, just struck EARTH!"
+    if isPredicted:
+        output += f"This was a \'{impact_probability}\' probability of impact, and it did so at "
+    else:
+        output += "This was an UNPREDICTED strike, and it hit at "
+    output += f"{velocity_infinity_kps} kilometers per SECOND! That's {velocity_infinity_kps * 3600}km/h!\n"
+    output += f"Considering the size of {name} is {diameter_m} meters in diameter, with approximate mass of {mass_kg}kg,\n"
+    output += f"that means it struck earth with an impact of {kinetic_Energy_Mt}Mt, which is equal to {(kinetic_Energy_Mt * 1000000):,.0f} million tons of TNT!"
+    output += "\nTHAT'S A LOT OF DAMAGE!"
+
+    return output
+
+
+
+
+
+# TEST ASTEROID: 3092161
+# neo3092161 = fetch_asteroid_dictionary("3092161", api_key)
+# print_all_data_for_asteroid_dict(neo3092161)
+# plot_asteroid_dictionary(neo3092161)
+# print(neo3092161.get('is_sentry_object'))
+# get_damage_from_neoID("3092161")
+
+
+
+
+
+
+if __name__ == "__main__":
+    print(get_damage_from_neoID("3092161"))
