@@ -129,7 +129,6 @@
         height: 100%;
         width: 65vw;
         z-index: 1;
-
         border: 3px solid var(--color-primary);
         border-radius: 8px;
         box-shadow: 0 0 12px rgba(0,198,255,0.3);
@@ -221,8 +220,7 @@
         min-height: 50px;
         text-overflow: ellipsis;
         align-items: center;
-        justify-content: center;
-        
+        justify-content: center;  
     }
 
     #plotBtn:hover {
@@ -523,6 +521,11 @@
         const neoName = neoData.name;
         const meteorPhysicalRad = neoData.r_ast;
 
+        const energyK = 0.5 * neo.mass_kg * Math.pow(neo.velocity, 2);
+        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
+        const craterCountExp = 1.0/2.59
+        const craterRad = (Math.pow(energyK / 9.1e17, craterCountExp))/2;
+
         if(selectedMarker) map.removeLayer(selectedMarker);
         if(blastCircle) map.removeLayer(blastCircle);
         if(craterCircle) map.removeLayer(craterCircle)
@@ -544,13 +547,13 @@
             color: 'darkgray',
             fillColor: '#888',
             fillOpacity: 0.8,
-            radius: meteorPhysicalRad
+            radius: craterRad
         }).addTo(map);
 
         // Define the animations to run
         const animations = [
             { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
-            { circle: craterCircle, targetRadius: meteorPhysicalRad, duration: 200, isMainBlast: false }
+            { circle: craterCircle, targetRadius: craterRad, duration: 200, isMainBlast: false }
         ];
 
         startAnimation(animations, neoName);
@@ -575,9 +578,7 @@
         const energyMT = energyK / JOULES_PER_MEGATON;
         const blastR_km = Math.round(neo.calculated_radius / 1000);
 
-        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
-        //const craterCountExp = 1.0/2.59
-        //const craterD = Math.pow(energyK / 9.1e17, craterCountExp);
+       
 
         document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
