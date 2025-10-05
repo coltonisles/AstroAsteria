@@ -13,24 +13,62 @@
 </head>
 
 <style>
+    body > div:first-child {
+        display:flex;
+        height: 700px;
+        width: 100vw;
+        overflow: hidden;
+    }
     /* Define map dimensions */
     #map {
-        height: 60vh;
-        width: 80vw;
-        float:left;
+        height: 100%;
+        width: 60vw;
+
+    }
+    #list-container{
+        height: 100%;
+        width: 35vw;
+        overflow-y: auto;
+        border-color: black;
+        padding-left: 15px;
+        box-sizing: border-box;
+    }
+    body > div:last-child {
+        display:flex;
+        padding: 20px;
+        width: 100%;
+       box-sizing: border-box;
     }
     .list-item{
-        padding: 5px;
+
+        padding: 10px 15px;
+        font-size: 1.40em;
         cursor: pointer;
         border: 1px solid transparent;
+        transition: background-color 0.1s, color 0.1s;
     }
     .list-item:hover{
-        background-color: rgba(0,0,0,0.1);
+        background-color: rgba(0, 0, 0, 0.3);
     }
     .list-item.selected{
-        background-color: rgba(0,0,0,0.1);
+        background-color: black;
         color:white;
         font-weight: bold;
+    }
+    .list-item.selected::marker{
+        color: black;
+    }
+    #plotBtn{
+        margin-top: 10px;
+        width: 40%;
+        height: 140px;
+        font-size: 1.40em;
+        cursor: pointer;
+        border: 1px solid transparent;
+
+    }
+    #plotBtn:hover{
+        background-color: rgba(0, 0, 0, 0.3);
     }
 </style>
 
@@ -51,7 +89,8 @@
             <li class="list-item">placeHolder9</li>
             <li class="list-item">placeHolder0</li>
         </ol>
-        <!--temp-->
+
+        <button id="plotBtn">Simulate Impact</button>
         <p id="neo-display"></p>
     </div>
 </div>
@@ -88,60 +127,142 @@
         crossorigin=""></script>
 
 <script>
-    // 1. Declare selectedMarker outside the DOMContentLoaded function
-    //    so the click handler can access and update it.
-    let selectedMarker = null;
+    /**
+     * Animates a Leaflet circle's expansion from 0 to the target radius.
+     * @param {L.Circle} circle - The Leaflet circle object to animate.
+     * @param {number} targetRadius - The final radius in METERS (calculated blast radius).
+     * @param {string} name - The name of the object being plotted.
+     */
 
+    function animateCircle(circle, targetRadius, name) {
+        const duration = 1000; // Total animation time in milliseconds (1.5 seconds)
+        const startTime = performance.now();
+        const display = document.getElementById('neo-display');
+
+        function step(currentTime) {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(1, elapsedTime / duration); // Progress from 0 to 1
+
+            // Calculate the current radius based on the progress
+            const currentRadius = targetRadius * progress;
+            circle.setRadius(currentRadius);
+
+            // Update display text during animation
+            display.textContent = `Simulating: ${name} | Current Radius: ${Math.round(currentRadius / 1000)} km`;
+
+            // If not finished, request the next frame
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                // Animation complete, set final display text
+                display.textContent = `Plotted: ${name} | Final Radius: ${Math.round(targetRadius / 1000)} km`;
+            }
+        }
+
+        // Start the animation loop
+        requestAnimationFrame(step);
+    }
     document.addEventListener('DOMContentLoaded', function() {
 
-        // 2. The map variable is defined and initialized here!
-        let map = L.map('map').setView([45, -30], 2);
+    let selectedMarker = null;
+    let impactCircle = null;
+    let map = null;
+    let selected = null;
+
+    const testNeoData = [
+        //will need to implement actual blast radius later since radius here is in reference to the radius of the circle
+        {'id': "123456", 'name': 'chicxulub', 'radius': '190000', 'details': 'diameter: 12km'}
+    ]
+
+    function plotSelected(neoData, maplat, maplon){
+        if(!neoData || !map) return;
+
+        const lat = maplat;
+        const lon = maplon;
+        const radius = neoData.radius;
+        const neoName = neoData.name;
+
+        if(selectedMarker) {
+            map.removeLayer(selectedMarker);
+        }
+        if(impactCircle){
+            map.removeLayer(impactCircle);
+        }
+
+        map.setView([lat, lon], 5);
+
+        selectedMarker = L.marker([lat, lon]).addTo(map)
+            .bindPopup(`Impact Center: ${neoName}`).openPopup();
+        impactCircle = L.circle([lat, lon], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.2,
+            radius: radius
+        }).addTo(map);
+
+        animateCircle(impactCircle, radius, name);
+        const display = document.getElementById('neo-display');
+        display.textContent = `Plotted: ${neoName} | Radius: ${radius / 1000} km`;
+    }
+
+
+        const plot = document.getElementById('plotBtn');
+        const display = document.getElementById('neo-display');
+        const list = document.getElementById('neo-list');
+        let lat = null;
+        let lon = null;
+        map = L.map('map').setView([45, -30], 3);
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // 3. ATTACH THE CLICK LISTENER INSIDE the DOMContentLoaded function
-        //    This ensures 'map' is a valid object when .on('click') is called.
+        //This ensures 'map' is a valid object when .on('click') is called.
         map.on('click', function(e) {
 
-            let lat = e.latlng.lat;
-            let lon = e.latlng.lng;
+            lat = e.latlng.lat;
+            lon = e.latlng.lng;
 
             console.log("Selected Latitude:", lat.toFixed(4));
             console.log("Selected Longitude:", lon.toFixed(4));
 
-            // A. Remove the old marker if it exists
+            //Remove the old marker if it exists
             if (selectedMarker) {
                 map.removeLayer(selectedMarker);
             }
 
-            // B. Add new marker and update the global selectedMarker variable
+            //Add new marker and update the global selectedMarker variable
             selectedMarker = L.marker([lat, lon]).addTo(map)
                 .bindPopup(`Lat: ${lat.toFixed(4)}<br>Lon: ${lon.toFixed(4)}`)
                 .openPopup();
         });
 
-        const list = document.getElementById('neo-list');
-        const display = document.getElementById('neo-display');
+
+
 
         list.addEventListener('click', function(e) {
             const selected = e.target.closest('li');
 
             if(selected && list.contains(selected)) {
+
+                list.querySelectorAll('.list-item').forEach(item => item.classList.remove('selected'));
+
+                selected.classList.add('selected');
+
                 //meteor name
                 const itemContent = selected.textContent.trim();
 
                 display.textContent = `Selected Item: ${itemContent}`;
             }
-            //add highlighting function
         })
 
+        plot.addEventListener('click', function(){
+            plotSelected(testNeoData[0], lat, lon);
+        });
 
     });// End of DOMContentLoaded
 
-    // The previous click listener code was here, which caused the error.
 </script>
 
 </body>
