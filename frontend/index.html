@@ -318,6 +318,19 @@
         } 
     }
 
+    @media (max-width: 600px) 
+    {
+        body > div:first-child {
+            flex-direction: column;
+            height: auto;
+        }
+
+        #map, #list-container {
+            width: 100vw;
+            height: 400px;
+        }
+    }
+
     /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
        for the Impact Radius, so no :nth-child styles are needed here. */
 
