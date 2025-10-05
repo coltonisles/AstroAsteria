@@ -11,19 +11,21 @@ import os
 
 load_dotenv()
 
-api_key = str(os.getenv('API_KEY'))
-url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
-response = requests.get(url)
-data = response.json()
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     
+    HookedOnSentry.multipage_fetch_NEO_IDs(10)
+    
     closests = HookedOnSentry.get_X_soonest_approaching_neo_IDs_from_global_list(10)
+    lsit_of_astroid = []
 
-    return render_template('index.html', items=closests)
+    for i in closests:
+        lsit_of_astroid.append(HookedOnSentry.fetch_asteroid_dictionary(i)['name'])
+
+    return render_template('index.html', items=lsit_of_astroid)
 
 
 
