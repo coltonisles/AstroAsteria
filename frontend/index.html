@@ -248,6 +248,7 @@
         align-items: flex-start;
         gap: 40px;
         margin-top: 20px;
+        margin-left: 15px;
     }
     #details-container > div
     {
@@ -262,6 +263,23 @@
     #detials-container h3
     {
         margin-bottom: 10px;
+    }
+    #graph-placeholder
+    {
+         margin-right: 15px;
+    }
+
+    .placeholder-box
+    {
+        width: 100%;
+        height: 200px;
+        background-color: #f0f0f0;
+        border: 2px dashed #bbb;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #666;
+        font-style: italic;
     }
 
     /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
@@ -283,15 +301,15 @@
 <!--second layer for details-->
 <div id="details-container"> 
     <div> <h3>_asteroid-name_ Details:</h3>
-    <ul id="asteroid-details">
-        <li>Impact Probability:</li>
-        <li>Predicted Impact Date:</li>
-        <li>Diameter:</li>
-        <li>Mass:</li>
-        <li>Distance from Earth:</li>
-        <li>Velocity:</li>
-    </ul>
-</div>
+        <ul id="asteroid-details">
+            <li>Impact Probability:</li>
+            <li>Predicted Impact Date:</li>
+            <li>Diameter:</li>
+            <li>Mass:</li>
+            <li>Distance from Earth:</li>
+            <li>Velocity:</li>
+        </ul>
+    </div>
     <div> <h3>Impact Details:</h3>
         <ul id="impact-details">
             <li>Energy:</li>
@@ -302,7 +320,10 @@
             <li>Palermo Scale:</li>
         </ul>
     </div>
-    <div> </div>
+    <div id="graph-placeholder"> 
+        <h3>Asteroid's Trajectory</h3>
+        <div class="placeholder-box">[graph-placeholder]</div>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
