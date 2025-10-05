@@ -109,15 +109,15 @@ compute_mass_kg_from_diameter(estimated_diameter_meters, density_g_cm3=2.6)
 # ----------------------------- #
 # -- GLOBAL VARIABLE STORAGE -- #
 # Preparing lists to store NEOs. Including separate lists for their IDs 
-global_list_of_saved_NEOs = []
-global_list_of_saved_NEOs_in_Sentry = []
+global_list_of_saved_NEO_IDs = []
+global_list_of_saved_NEO_IDs_in_Sentry = []
 global_neo_multipage_dataset = {}
 global_page_to_browse = 0
 """
 The main FETCH functions only pull 1 PAGE at a time, out of who knows how many pages...
 So this below function browses all the pages, until a defined limit is reached. 
 """
-def multipage_fetch_NEOs(limit=5000):
+def multipage_fetch_NEO_IDs(limit=5000):
     """
     This function browses *all* of the pages of the NASA NEO api dataset, and adds each NEO to 
     'list_of_saved_neos' until a defined limit (default = 100)
@@ -133,11 +133,11 @@ def multipage_fetch_NEOs(limit=5000):
     """
     # Use the GLOBAL keyword to treat a variable as 'static', meaning data will persist instead of resetting each time this function runs
     global global_page_to_browse
-    global global_list_of_saved_NEOs
-    global global_list_of_saved_NEOs_in_Sentry 
+    global global_list_of_saved_NEO_IDs
+    global global_list_of_saved_NEO_IDs_in_Sentry 
     global global_neo_multipage_dataset
 
-    while (len(global_list_of_saved_NEOs) < limit):
+    while (len(global_list_of_saved_NEO_IDs) < limit):
 
         # Cycle through each page of the dataset
         global_page_to_browse += 1
@@ -148,25 +148,28 @@ def multipage_fetch_NEOs(limit=5000):
         page_of_NEOs_json = r.json()
 
         # Update GLOBAL DICT of multi-paged dataset to include this page
-        global_neo_multipage_dataset.update(page_of_NEOs_json)
+        # global_neo_multipage_dataset.update(page_of_NEOs_json)
 
-        # Update GLOBAL lists of NEOs saved from the API dataset
+        # Update GLOBAL lists of NEO 'id' values saved from the API dataset
         neo_asteroids = page_of_NEOs_json['near_earth_objects']
         for neo in neo_asteroids:
-            global_list_of_saved_NEOs.append(neo)
+            global_list_of_saved_NEO_IDs.append(neo['id'])
             if neo['is_sentry_object']:
-                global_list_of_saved_NEOs_in_Sentry.append(neo)
-            if len(global_list_of_saved_NEOs) >= limit:
+                global_list_of_saved_NEO_IDs_in_Sentry.append(neo['id'])
+            if len(global_list_of_saved_NEO_IDs) >= limit:
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
         
         # Avoid crashing NASA's server
         time.sleep(0.1)
-        if len(global_list_of_saved_NEOs) >= limit:
+        if len(global_list_of_saved_NEO_IDs) >= limit:
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
 
-#multipage_fetch_NEOs(5000)
+multipage_fetch_NEO_IDs(50)
+print(len(global_list_of_saved_NEO_IDs))
+print("\n")
+print(global_list_of_saved_NEO_IDs)
 
 
 
