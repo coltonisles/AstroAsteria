@@ -113,6 +113,9 @@
         height: 100%;
         width: 65vw;
         z-index: 1;
+        border: 3px solid var(--color-primary);
+        border-radius: 8px;
+        box-shadow: 0 0 12px rgba(0,198,255,0.3);
     }
 
     /* List and Controls Container */
@@ -195,6 +198,14 @@
         font-weight: bold;
         margin-top: var(--spacing-unit);
         transition: background-color 0.2s, transform 0.1s;
+    
+        white-space: nowrap;
+        overflow: hidden;
+        min-height: 50px;
+        text-overflow: ellipsis;
+        align-items: center;
+        justify-content: center;
+        
     }
 
     #plotBtn:hover {
@@ -249,11 +260,13 @@
         gap: 40px;
         margin-top: 20px;
         margin-left: 15px;
+        flex-wrap: wrap;
     }
     #details-container > div
     {
         flex:1;
         min-width: 250px;
+        box-sizing: border-box;
     }
     #details-container ul
     {
@@ -280,6 +293,42 @@
         align-items: center;
         color: #666;
         font-style: italic;
+        margin-right: 15px;
+    }
+
+    /* Responsive behavior: stack and contain content properly */
+    @media (max-width: 1000px) {
+        #details-container {
+            flex-direction: column;
+            gap: 25px;
+            margin-left: 0;
+            margin-right: 0;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        #details-container > div {
+            width: 100%;
+            min-width: 0; /* Prevents flex children from overflowing */
+        }
+
+        .placeholder-box {
+            width: 100%;
+            height: 250px; /* Slightly taller for mobile */
+        } 
+    }
+
+    @media (max-width: 600px) 
+    {
+        body > div:first-child {
+            flex-direction: column;
+            height: auto;
+        }
+
+        #map, #list-container {
+            width: 100vw;
+            height: 400px;
+        }
     }
 
 

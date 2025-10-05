@@ -10,6 +10,9 @@ import requests
 import pandas as pd
 import os, io
 import sys
+from datetime import datetime
+from matplotlib.ticker import MaxNLocator
+import matplotlib.dates as mdates
 
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
@@ -46,6 +49,16 @@ print_all_data_for_asteroid_dict(asteroid_dict)
             fetch_asteroid_dictionary(neo_id, api_key)
     - OUTPUT:
         str:    Formatted string of the useful data
+#
+get_next_approach_date_by_neoID(neo_id)
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+        Input:
+            str[] -> The 'neo_id' of a NEO from the NASA NEO API
+        
+        Return:
+            datetime -> The next (or most recent) 'close-approach'
 #
 get_impactEnergy_Mt_from_neoID(neo_id) -> float:
         - INPUT: 'id' value from a neo object (from the "neo_url" dataset)
@@ -96,15 +109,15 @@ compute_mass_kg_from_diameter(estimated_diameter_meters, density_g_cm3=2.6)
 # ----------------------------- #
 # -- GLOBAL VARIABLE STORAGE -- #
 # Preparing lists to store NEOs. Including separate lists for their IDs 
-global_list_of_saved_NEOs = []
-global_list_of_saved_NEOs_in_Sentry = []
+global_list_of_saved_NEO_IDs = []
+global_list_of_saved_NEO_IDs_in_Sentry = []
 global_neo_multipage_dataset = {}
 global_page_to_browse = 0
 """
 The main FETCH functions only pull 1 PAGE at a time, out of who knows how many pages...
 So this below function browses all the pages, until a defined limit is reached. 
 """
-def multipage_fetch_NEOs(limit=5000):
+def multipage_fetch_NEO_IDs(limit=5000):
     """
     This function browses *all* of the pages of the NASA NEO api dataset, and adds each NEO to 
     'list_of_saved_neos' until a defined limit (default = 100)
@@ -120,11 +133,11 @@ def multipage_fetch_NEOs(limit=5000):
     """
     # Use the GLOBAL keyword to treat a variable as 'static', meaning data will persist instead of resetting each time this function runs
     global global_page_to_browse
-    global global_list_of_saved_NEOs
-    global global_list_of_saved_NEOs_in_Sentry 
+    global global_list_of_saved_NEO_IDs
+    global global_list_of_saved_NEO_IDs_in_Sentry 
     global global_neo_multipage_dataset
 
-    while (len(global_list_of_saved_NEOs) < limit):
+    while (len(global_list_of_saved_NEO_IDs) < limit):
 
         # Cycle through each page of the dataset
         global_page_to_browse += 1
@@ -132,31 +145,31 @@ def multipage_fetch_NEOs(limit=5000):
         r = requests.get(neo_api_url)
         if r.status_code != 200:
             raise RuntimeError(f"Sentry API request failed: {r.status_code} - {r.text}")
-        else:
-            print(f"Successfully access page {global_page_to_browse}")
         page_of_NEOs_json = r.json()
 
         # Update GLOBAL DICT of multi-paged dataset to include this page
-        global_neo_multipage_dataset.update(page_of_NEOs_json)
+        # global_neo_multipage_dataset.update(page_of_NEOs_json)
 
-        # Update GLOBAL lists of NEOs saved from the API dataset
+        # Update GLOBAL lists of NEO 'id' values saved from the API dataset
         neo_asteroids = page_of_NEOs_json['near_earth_objects']
         for neo in neo_asteroids:
-            global_list_of_saved_NEOs.append(neo)
+            global_list_of_saved_NEO_IDs.append(neo['id'])
             if neo['is_sentry_object']:
-                global_list_of_saved_NEOs_in_Sentry.append(neo)
-                print(f"\nFound a SENTRY object! {neo.get('id')}")
-            if len(global_list_of_saved_NEOs) >= limit:
+                global_list_of_saved_NEO_IDs_in_Sentry.append(neo['id'])
+            if len(global_list_of_saved_NEO_IDs) >= limit:
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
         
         # Avoid crashing NASA's server
         time.sleep(0.1)
-        if len(global_list_of_saved_NEOs) >= limit:
+        if len(global_list_of_saved_NEO_IDs) >= limit:
                 print("\n Declared size limit of global_list_of_saved_NEOs[] has been reached.")
                 break
 
-#multipage_fetch_NEOs(5000)
+multipage_fetch_NEO_IDs(50)
+print(len(global_list_of_saved_NEO_IDs))
+print("\n")
+print(global_list_of_saved_NEO_IDs)
 
 
 
@@ -331,14 +344,21 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
 
 # -- plot the RETURNED DICTIONARY from 'fetch_asteroid_dictionary(neo_id, api_key)' -- #
 def plot_asteroid_dictionary(asteroid_dict):
+    dates_to_plot = convert_approach_dates_to_DateTypeList(asteroid_dict['close_approach_date'])
     plt.figure(figsize=(10, 5))
-    plt.plot(asteroid_dict['close_approach_date'], asteroid_dict['miss_distance_km'], marker='o')
+    plt.plot(dates_to_plot, asteroid_dict['miss_distance_km'], marker='o')
     plt.xlabel('Close Approach Date')
-    plt.ylabel('Miss Distance (km)')
-    plt.title(f'Asteroid {asteroid_dict["name"]} Miss Distance Over Time')
+    plt.ylabel('Miss Distance (tens of millions of kilometers from Earth)')
+    plt.title(f'Asteroid {asteroid_dict["name"]} Proximity to Earth Distance Over Time')
     plt.xticks(rotation=45)
+    # Format the x-axis dates
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))  # Change format to just Year
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())  # Automatically determine good intervals
+    plt.gcf().autofmt_xdate()  # Automatically format the x-axis labels
+    plt.axvline(datetime.now(), color='red', linestyle='--', label='Today')
     plt.grid(True)
     plt.tight_layout()
+    plt.legend()
     plt.show()
 
 # -------------------------------------------------------- #
@@ -529,6 +549,90 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 
+## --- Get next close-approach-date -- ##
+def convert_approach_dates_to_DateTypeList(dates_list):
+    """
+    Input:
+        str[] -> The ['close_approach_date'] list from 
+                    (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+    Return:
+        datetime[] -> The same list, but as DATETIME objects instead of str
+    """
+    # Today
+    current_date = datetime.now()
+
+    # Convert the dates str[] to DATE[]
+    dates_AS_dates = []
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        dates_AS_dates.append(date_AS_date)
+
+    return dates_AS_dates
+
+def get_next_approach_date(dates_list):
+    """
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+    Input:
+        str[] -> The ['close_approach_date'] list from 
+                    (fetch_asteroid_dictionary(neo_id))['close_approach_date']
+    
+    Return:
+        datetime -> The next (or most recent) 'close-approach'
+    """
+    # Today
+    current_date = datetime.now()
+
+    # Convert the dates str[] to DATE[]
+    previous_dates = []
+    next_approach_date = None
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        if (date_AS_date < current_date):
+            previous_dates.append(date_AS_date)
+        else:
+            next_approach_date = date_AS_date
+    
+    if next_approach_date is not None:
+        return next_approach_date
+    else:
+        # Return the most recent approach if no predicted future approach
+        return previous_dates[-1]
+
+def get_next_approach_date_by_neoID(neo_id):
+    """
+    Get the next upcoming 'close approach' according to the NASA API NEO dataset.
+    Return the most recent approach if no predicted future approach.
+
+    Input:
+        str -> neo_id
+    
+    Return:
+        datetime -> The next (or most recent) 'close-approach'
+    """
+    # Today
+    current_date = datetime.now()
+
+    neo_dict = fetch_asteroid_dictionary(neo_id)
+    dates_list = neo_dict['close_approach_date']
+
+    # Convert the dates str[] to DATE[]
+    previous_dates = []
+    next_approach_date = None
+    for date in dates_list:
+        date_AS_date = datetime.strptime(date, '%Y-%m-%d')
+        if (date_AS_date < current_date):
+            previous_dates.append(date_AS_date)
+        else:
+            next_approach_date = date_AS_date
+    
+    if next_approach_date is not None:
+        return next_approach_date
+    else:
+        # Return the most recent approach if no predicted future approach
+        return previous_dates[-1]
+
 
 # TEST ASTEROID: 3092161
 # neo3092161 = fetch_asteroid_dictionary("3092161")
@@ -544,9 +648,20 @@ def get_impactEnergy_Mt_from_neoID(neo_id) -> float:
 
 
 
-if __name__ == "__main__":
-    print(get_damageString_from_neoID("3092161"))
-    print(get_damageString_from_neoID("2001566"))
+# if __name__ == "__main__":
+#     # print(get_damageString_from_neoID("3092161"))
+#     # print(get_damageString_from_neoID("2001566"))
 
-    plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
-    plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
+#     # plot_asteroid_dictionary(fetch_asteroid_dictionary("3092161"))
+#     # plot_asteroid_dictionary(fetch_asteroid_dictionary("2001566"))
+
+#     neo_2001566 = fetch_asteroid_dictionary("2001566")
+#     neo_3092161 = fetch_asteroid_dictionary("3092161")
+
+
+#     # test
+#     plot_asteroid_dictionary(neo_2001566)
+#     plot_asteroid_dictionary(neo_3092161)
+
+
+    
