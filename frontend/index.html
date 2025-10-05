@@ -37,7 +37,7 @@
         display:flex;
         padding: 20px;
         width: 100%;
-       box-sizing: border-box;
+        box-sizing: border-box;
     }
     .list-item{
 
@@ -71,44 +71,204 @@
         background-color: rgba(0, 0, 0, 0.3);
     }
 </style>
+<style>
+    /* -------------------------------------- */
+    /* CSS VARIABLES (The "Template")         */
+    /* Change these values to quickly change the entire theme. */
+    /* -------------------------------------- */
+    :root {
+        --color-primary: #00c6ff;     /* Blue accent (status text, selected list) */
+        --color-secondary: #f03;    /* Red accent (impact button, blast radius highlight) */
+        --color-bg-dark: #121212;     /* Main background */
+        --color-bg-light: #1e1e1e;    /* Containers/panels background */
+        --color-text-light: #e0e0e0;  /* Main text color */
+        --color-border: #333;         /* Separator/divider color */
+        --spacing-unit: 15px;         /* Base padding unit */
+    }
+
+    /* -------------------------------------- */
+    /* GLOBAL & LAYOUT STYLES                 */
+    /* -------------------------------------- */
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        background-color: var(--color-bg-dark);
+        color: var(--color-text-light);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Top half container (Map + List/Controls) */
+    body > div:first-child {
+        display: flex;
+        height: 700px;
+        width: 100vw;
+        overflow: hidden;
+        border-bottom: 3px solid var(--color-primary);
+    }
+
+    /* Define map dimensions */
+    #map {
+        height: 100%;
+        width: 65vw;
+        z-index: 1;
+    }
+
+    /* List and Controls Container */
+    #list-container {
+        height: 100%;
+        width: 35vw;
+        overflow-y: auto;
+        background-color: var(--color-bg-light);
+        padding: var(--spacing-unit) 25px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Headers */
+    h3 {
+        color: var(--color-primary);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 5px;
+        margin-top: 0;
+    }
+
+    /* NEO Display/Instruction Text */
+    #neo-display {
+        font-size: 1em;
+        padding: 10px;
+        margin-top: 20px;
+        color: var(--color-primary);
+        border: 1px dashed var(--color-primary);
+        background-color: rgba(0, 198, 255, 0.1); /* Semi-transparent background using the primary color */
+        font-weight: bold;
+        text-align: center;
+    }
+
+    /* -------------------------------------- */
+    /* NEO LIST STYLES                        */
+    /* -------------------------------------- */
+    #neo-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1;
+    }
+
+    .list-item {
+        padding: 12px 15px;
+        font-size: 1.1em;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        transition: background-color 0.2s, color 0.2s;
+        border: 1px solid var(--color-border);
+    }
+
+    .list-item:hover {
+        background-color: var(--color-border); /* Use border color for hover background */
+        color: #fff;
+    }
+
+    .list-item.selected {
+        background-color: var(--color-primary);
+        color: var(--color-bg-dark);
+        font-weight: bold;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    }
+
+    /* -------------------------------------- */
+    /* BUTTON STYLES                          */
+    /* -------------------------------------- */
+    #plotBtn {
+        width: 100%;
+        height: 50px;
+        font-size: 1.4em;
+        cursor: pointer;
+        background-color: var(--color-secondary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        margin-top: var(--spacing-unit);
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    #plotBtn:hover {
+        background-color: #d02a00; /* Slightly darker red on hover */
+        transform: translateY(-2px);
+    }
+
+    #plotBtn:active {
+        background-color: var(--color-secondary);
+        transform: translateY(0);
+    }
+
+    /* -------------------------------------- */
+    /* DETAILS SECTION                        */
+    /* -------------------------------------- */
+    body > div:last-child {
+        display: flex;
+        padding: 20px;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: var(--color-bg-light);
+        border-top: 1px solid var(--color-border);
+    }
+
+    body > div:last-child > div {
+        flex: 1;
+        padding: 0 20px;
+        border-right: 1px solid var(--color-border);
+    }
+
+    body > div:last-child > div:last-child {
+        border-right: none;
+    }
+
+    #asteroid-details, #impact-details {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    #asteroid-details li, #impact-details li {
+        padding: 5px 0;
+        border-bottom: 1px dotted var(--color-border);
+        font-size: 1em;
+    }
+
+    /* The JavaScript function 'renderDetailItem' now handles the bold/color styling
+       for the Impact Radius, so no :nth-child styles are needed here. */
+
+</style>
 
 <body>
-<div>  <!--first row-->
-    <div id="map"></div>
+<div>  <div id="map"></div>
 
     <div id="list-container">
         <ol id="neo-list">
-            <li class="list-item">placeHolder1</li>
-            <li class="list-item">placeHolder2</li>
-            <li class="list-item">placeHolder3</li>
-            <li class="list-item">placeHolder4</li>
-            <li class="list-item">placeHolder5</li>
-            <li class="list-item">placeHolder6</li>
-            <li class="list-item">placeHolder7</li>
-            <li class="list-item">placeHolder8</li>
-            <li class="list-item">placeHolder9</li>
-            <li class="list-item">placeHolder0</li>
         </ol>
 
         <button id="plotBtn">Simulate Impact</button>
-        <p id="neo-display"></p>
+        <p id="neo-display">Click on the map and select a meteor to simulate an impact.</p>
     </div>
 </div>
-<div> <!--second row-->
-    <div> <!--asteroid details div-->
-        <h3>_asteroid-name_ Details:</h3>
-        <ul>
-            <li>Impact Probability:</li>
-            <li>Predicted Impact Date:</li>
-            <li>Diameter:</li>
-            <li>Mass:</li>
-            <li>Distance from Earth:</li>
-            <li>Velocity:</li>
-        </ul>
-    </div>
-    <div> <!--impact details div-->
-        <h3>Impact Details:</h3>
-        <ul>
+<div> <div> <h3>_asteroid-name_ Details:</h3>
+    <ul id="asteroid-details">
+        <li>Impact Probability:</li>
+        <li>Predicted Impact Date:</li>
+        <li>Diameter:</li>
+        <li>Mass:</li>
+        <li>Distance from Earth:</li>
+        <li>Velocity:</li>
+    </ul>
+</div>
+    <div> <h3>Impact Details:</h3>
+        <ul id="impact-details">
             <li>Energy:</li>
             <li>Crater Size:</li>
             <li>Velocity Upon Entry:</li>
@@ -117,9 +277,7 @@
             <li>Palermo Scale:</li>
         </ul>
     </div>
-    <div> <!--trajectory third-->
-
-    </div>
+    <div> </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -127,142 +285,277 @@
         crossorigin=""></script>
 
 <script>
+    //NOTE: ADD AN INTRUCTION SECTION TO TELL USER THAT WAHT EACH CIRCLE REPRESENTS (NEEEDS TO ZOOM IN PRETTY CLOSE TO SEE CRATER CIRCLE)
+    // --- GLOBAL VARIABLES (Must be declared outside DOMContentLoaded for proper scope) ---
+    let map = null;
+    let selectedMarker = null;
+    let blastCircle = null;
+    let craterCircle = null;
+    let lastMapClickCoords = { lat: null, lon: null }; // Stores the last map click
+    let currentlySelectedNeo = null; // Stores data for the selected meteor
+    const ASSUMED_DENSITY = 3000; // kg/m^3 (Required for local calc)
+
+    // --- PHYSICS CONSTANTS ---
+    const PI = Math.PI;
+    const JOULES_PER_MEGATON = 4.184e15;
+    const BLAST_RADIUS_FACTOR = 2.5; // EIEP constant at 4psi (overpressure)
+
+    // --- SIMULATED EXTERNAL DATABASE ---
+    //replace with actual backend hooks
+    const ASTEROID_DB = {
+        "1998 QE2": { r_ast: 5, velocity: 20000, density: ASSUMED_DENSITY, diameter_km: 0.01, mass_kg: 1e6, prob: "Low", date: "N/A" },
+        "2023 JD4": { r_ast: 50, velocity: 15000, density: ASSUMED_DENSITY, diameter_km: 0.1, mass_kg: 1.5e7, prob: "Medium", date: "2050" },
+        "4179 Toutatis": { r_ast: 2700, velocity: 30000, density: ASSUMED_DENSITY, diameter_km: 5.4, mass_kg: 2e14, prob: "Low", date: "2069" },
+        "Deep Impact": { r_ast: 0.5, velocity: 25000, density: ASSUMED_DENSITY, diameter_km: 0.001, mass_kg: 1e5, prob: "Low", date: "N/A" },
+        "Vesta Scout": { r_ast: 500, velocity: 18000, density: ASSUMED_DENSITY, diameter_km: 1.0, mass_kg: 5e11, prob: "High", date: "2035" },
+        "Pallas Target": { r_ast: 750, velocity: 22000, density: ASSUMED_DENSITY, diameter_km: 1.5, mass_kg: 1e12, prob: "Low", date: "2099" },
+        "Chicxulub (Test)": { r_ast: 5000, velocity: 25000, density: 3000, diameter_km: 10, mass_kg: 1e15, prob: "N/A", date: "Past" }
+    };
+
+    // --- CORE CALCULATION (RESTORED TO MAKE FRONTEND FUNCTIONAL) ---
+    //blast radius is the radius in which the blast wave is reaches 4 psi(overpressure: destroy buildings, 3rd degree burns, rupture lungs)
+    function calculateBlastRadius(asRad, V, rho){
+        if(asRad <=0 || V <=0 || rho <=0){
+            return 0;
+        }
+        const volume = (4/3) * PI * Math.pow(asRad, 3);
+        const mass = rho * volume;
+        const energyK =  0.5 * mass * Math.pow(V, 2); // Joules
+        const energyMT = energyK / JOULES_PER_MEGATON // Megatons
+        // Damage radius in kilometers (km)
+        const damageRadius_km = BLAST_RADIUS_FACTOR * Math.pow(energyMT, 1/3);
+        return damageRadius_km * 1000; // Return in meters
+    }
+
+    // --- FUNCTION TO POPULATE THE NEO LIST ---
+    function renderNEOList(){
+        const list = document.getElementById('neo-list');
+        list.innerHTML = '';
+
+        Object.keys(ASTEROID_DB).forEach(name =>{
+            const li = document.createElement('li');
+            li.classList.add('list-item');
+            li.textContent = name;
+            li.setAttribute('data-name', name);
+            list.appendChild(li);
+        });
+    }
+
+    // --- ANIMATION FUNCTION (Generalized to animate multiple layers) ---
     /**
-     * Animates a Leaflet circle's expansion from 0 to the target radius.
-     * @param {L.Circle} circle - The Leaflet circle object to animate.
-     * @param {number} targetRadius - The final radius in METERS (calculated blast radius).
+     * Animates multiple Leaflet layers.
+     * @param {Array<Object>} animations - Array of {circle, targetRadius, duration} objects.
      * @param {string} name - The name of the object being plotted.
      */
-
-    function animateCircle(circle, targetRadius, name) {
-        const duration = 1000; // Total animation time in milliseconds (1.5 seconds)
+    function startAnimation(animations, name) {
+        const totalDuration = 1500; // Use the longest duration for the main loop
         const startTime = performance.now();
         const display = document.getElementById('neo-display');
+        let done = false;
 
         function step(currentTime) {
             const elapsedTime = currentTime - startTime;
-            const progress = Math.min(1, elapsedTime / duration); // Progress from 0 to 1
+            let allFinished = true;
 
-            // Calculate the current radius based on the progress
-            const currentRadius = targetRadius * progress;
-            circle.setRadius(currentRadius);
+            // Animate each item in the array
+            animations.forEach(anim => {
+                // Calculate progress based on the item's specific duration
+                const progress = Math.min(1, elapsedTime / anim.duration);
 
-            // Update display text during animation
-            display.textContent = `Simulating: ${name} | Current Radius: ${Math.round(currentRadius / 1000)} km`;
+                if (progress < 1) {
+                    allFinished = false;
+                }
 
-            // If not finished, request the next frame
-            if (progress < 1) {
+                // Set the current radius
+                const currentRadius = anim.targetRadius * progress;
+                anim.circle.setRadius(currentRadius);
+
+                // Update display text only using the main blast radius animation (index 0)
+                if (anim.isMainBlast) {
+                    display.textContent = `Simulating: ${name} | Current Radius: ${(currentRadius / 1000).toFixed(2)} km`;
+                }
+            });
+
+
+            if (!allFinished) {
                 requestAnimationFrame(step);
-            } else {
-                // Animation complete, set final display text
-                display.textContent = `Plotted: ${name} | Final Radius: ${Math.round(targetRadius / 1000)} km`;
+            } else if (!done) {
+                // Animation complete, set final display text once
+                const finalBlastRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
+                const finalCraterRadiusKm = (animations[1].targetRadius / 1000).toFixed(2);
+                display.textContent = `Plotted: ${name} | Final Blast Radius: ${finalBlastRadiusKm} km | Final Crater Radius: ${finalCraterRadiusKm} km`;
+                done = true;
             }
         }
-
-        // Start the animation loop
         requestAnimationFrame(step);
     }
-    document.addEventListener('DOMContentLoaded', function() {
 
-    let selectedMarker = null;
-    let impactCircle = null;
-    let map = null;
-    let selected = null;
-
-    const testNeoData = [
-        //will need to implement actual blast radius later since radius here is in reference to the radius of the circle
-        {'id': "123456", 'name': 'chicxulub', 'radius': '190000', 'details': 'diameter: 12km'}
-    ]
-
+    // --- PLOTTING FUNCTION  ---
     function plotSelected(neoData, maplat, maplon){
-        if(!neoData || !map) return;
+        if(!neoData || maplat === null || maplon === null || !map) {
+            document.getElementById('neo-display').textContent = "ERROR: Please select a meteor AND click a map location.";
+            return;
+        }
 
-        const lat = maplat;
-        const lon = maplon;
-        const radius = neoData.radius;
+        const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
         const neoName = neoData.name;
+        const meteorPhysicalRad = neoData.r_ast;
 
-        if(selectedMarker) {
-            map.removeLayer(selectedMarker);
-        }
-        if(impactCircle){
-            map.removeLayer(impactCircle);
-        }
+        if(selectedMarker) map.removeLayer(selectedMarker);
+        if(blastCircle) map.removeLayer(blastCircle);
+        if(craterCircle) map.removeLayer(craterCircle)
 
-        map.setView([lat, lon], 5);
 
-        selectedMarker = L.marker([lat, lon]).addTo(map)
+        map.setView([maplat, maplon], 5);
+
+        selectedMarker = L.marker([maplat, maplon]).addTo(map)
             .bindPopup(`Impact Center: ${neoName}`).openPopup();
-        impactCircle = L.circle([lat, lon], {
+
+        blastCircle = L.circle([maplat, maplon], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.2,
-            radius: radius
+            radius: 0 // Start animation from 0
         }).addTo(map);
 
-        animateCircle(impactCircle, radius, name);
-        const display = document.getElementById('neo-display');
-        display.textContent = `Plotted: ${neoName} | Radius: ${radius / 1000} km`;
+        craterCircle = L.circle([maplat, maplon], {
+            color: 'darkgray',
+            fillColor: '#888',
+            fillOpacity: 0.8,
+            radius: meteorPhysicalRad
+        }).addTo(map);
+
+        // Define the animations to run
+        const animations = [
+            { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
+            { circle: craterCircle, targetRadius: meteorPhysicalRad, duration: 200, isMainBlast: false }
+        ];
+
+        startAnimation(animations, neoName);
     }
 
+    // --- FUNCTION TO POPULATE DETAILS ---
+    function populateDetails(neo) {
+        // Asteroid Details List (second row, first column)
+        document.querySelector("body > div:last-child > div:first-child h3").textContent = `${neo.name} Details:`;
+        const astDetailsList = document.getElementById('asteroid-details');
+        astDetailsList.innerHTML = `
+            <li>Impact Probability: ${neo.prob}</li>
+            <li>Predicted Impact Date: ${neo.date}</li>
+            <li>Diameter: ${neo.diameter_km} km</li>
+            <li>Mass: ${neo.mass_kg.toExponential(2)} kg</li>
+            <li>Velocity: ${neo.velocity / 1000} km/s</li>
+            <li>Density ($\rho$): ${neo.density} kg/m³</li>
+        `;
 
-        const plot = document.getElementById('plotBtn');
+        // Impact Details List (second row, second column)
+        const energyK = 0.5 * neo.mass_kg * Math.pow(neo.velocity, 2);
+        const energyMT = energyK / JOULES_PER_MEGATON;
+        const blastR_km = Math.round(neo.calculated_radius / 1000);
+
+        document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
+        const impDetailsList = document.getElementById('impact-details');
+        impDetailsList.innerHTML = `
+            <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
+            <li>Blast Radius (4 psi): ${blastR_km} km</li>
+            <li>Velocity Upon Entry: ${neo.velocity / 1000} km/s</li>
+            <li>Resulting Earthquake Magnitude: TBD</li>
+            <li>Total Area Impacted: TBD</li>
+            <li>Palermo Scale: TBD</li>
+        `;
+    }
+
+    // --- MAIN EXECUTION ---
+    document.addEventListener('DOMContentLoaded', function() {
+
+        const plotBtn = document.getElementById('plotBtn');
         const display = document.getElementById('neo-display');
         const list = document.getElementById('neo-list');
-        let lat = null;
-        let lon = null;
-        map = L.map('map').setView([45, -30], 3);
+
+        //Initialize Map
+        map = L.map('map').setView([10, 0], 2);
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        //This ensures 'map' is a valid object when .on('click') is called.
+        //Populate the list
+        renderNEOList();
+
+        //Map Click Listener (Captures Lat/Lon)
         map.on('click', function(e) {
 
-            lat = e.latlng.lat;
-            lon = e.latlng.lng;
+            lastMapClickCoords.lat = e.latlng.lat;
+            lastMapClickCoords.lon = e.latlng.lng;
 
-            console.log("Selected Latitude:", lat.toFixed(4));
-            console.log("Selected Longitude:", lon.toFixed(4));
+            if (selectedMarker) map.removeLayer(selectedMarker);
 
-            //Remove the old marker if it exists
-            if (selectedMarker) {
-                map.removeLayer(selectedMarker);
-            }
-
-            //Add new marker and update the global selectedMarker variable
-            selectedMarker = L.marker([lat, lon]).addTo(map)
-                .bindPopup(`Lat: ${lat.toFixed(4)}<br>Lon: ${lon.toFixed(4)}`)
+            // Add the new marker (blue circle to indicate click location, not impact)
+            selectedMarker = L.circleMarker([lastMapClickCoords.lat, lastMapClickCoords.lon], {
+                radius: 8,
+                color: 'blue',
+                fillColor: '#03f',
+                fillOpacity: 0.8
+            }).addTo(map)
+                .bindPopup(`Impact Target: Lat ${lastMapClickCoords.lat.toFixed(2)}, Lon ${lastMapClickCoords.lon.toFixed(2)}`)
                 .openPopup();
+
+            display.textContent = `Target set at Lat: ${lastMapClickCoords.lat.toFixed(2)}, Lon: ${lastMapClickCoords.lon.toFixed(2)}. Now select a meteor.`;
         });
 
-
-
-
+        //List Click Listener (Selects Meteor and Calculates Radius)
         list.addEventListener('click', function(e) {
-            const selected = e.target.closest('li');
+            const selectedLi = e.target.closest('li');
 
-            if(selected && list.contains(selected)) {
-
+            if(selectedLi && list.contains(selectedLi)) {
                 list.querySelectorAll('.list-item').forEach(item => item.classList.remove('selected'));
+                selectedLi.classList.add('selected');
 
-                selected.classList.add('selected');
+                const neoName = selectedLi.getAttribute('data-name');
+                const neoData = ASTEROID_DB[neoName];
 
-                //meteor name
-                const itemContent = selected.textContent.trim();
+                // Perform the required calculation using the retrieved properties
+                const calculated_radius = calculateBlastRadius(
+                    neoData.r_ast,
+                    neoData.velocity,
+                    neoData.density
+                );
 
-                display.textContent = `Selected Item: ${itemContent}`;
+                // Store the selected meteor's data, including the calculated radius
+                currentlySelectedNeo = {
+                    name: neoName,
+                    calculated_radius: calculated_radius,
+                    // Pass other data needed for the details panels
+                    ...neoData
+                };
+
+                populateDetails(currentlySelectedNeo);
+
+                const r_km = (calculated_radius / 1000).toFixed(2);
+                display.textContent = `Selected: ${neoName} (Blast R: ${r_km} km). Click 'Simulate Impact'.`;
             }
-        })
+        });
 
-        plot.addEventListener('click', function(){
-            plotSelected(testNeoData[0], lat, lon);
+        //Plot Button Listener
+        plotBtn.addEventListener('click', function(){
+            if (!currentlySelectedNeo) {
+                alert("Please select a meteor from the list first.");
+                return;
+            }
+            if (lastMapClickCoords.lat === null) {
+                alert("Please click a location on the map to set the impact site.");
+                return;
+            }
+
+            plotSelected(
+                currentlySelectedNeo,
+                lastMapClickCoords.lat,
+                lastMapClickCoords.lon
+            );
         });
 
     });// End of DOMContentLoaded
-
 </script>
 
 </body>
