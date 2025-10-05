@@ -104,7 +104,7 @@ global_page_to_browse = 0
 The main FETCH functions only pull 1 PAGE at a time, out of who knows how many pages...
 So this below function browses all the pages, until a defined limit is reached. 
 """
-def multipage_fetch_NEOs(limit=100):
+def multipage_fetch_NEOs(limit=5000):
     """
     This function browses *all* of the pages of the NASA NEO api dataset, and adds each NEO to 
     'list_of_saved_neos' until a defined limit (default = 100)
