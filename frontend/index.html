@@ -113,7 +113,7 @@
         height: 100%;
         width: 65vw;
         z-index: 1;
-        
+
         border: 3px solid var(--color-primary);
         border-radius: 8px;
         box-shadow: 0 0 12px rgba(0,198,255,0.3);
@@ -507,7 +507,7 @@
         if(craterCircle) map.removeLayer(craterCircle)
 
 
-        map.setView([maplat, maplon], 5);
+        map.setView([maplat, maplon], 7);
 
         selectedMarker = L.marker([maplat, maplon]).addTo(map)
             .bindPopup(`Impact Center: ${neoName}`).openPopup();
