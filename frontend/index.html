@@ -579,6 +579,10 @@
         const energyMT = energyK / JOULES_PER_MEGATON;
         const blastR_km = Math.round(neo.calculated_radius / 1000);
 
+        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
+        //const craterCountExp = 1.0/2.59
+        //const craterD = Math.pow(energyK / 9.1e17, craterCountExp);
+
         document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
