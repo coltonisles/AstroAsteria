@@ -367,7 +367,10 @@
 <div class="top-container">  <div id="map"></div>
 
     <div id="list-container">
-        <ol id="neo-list">
+        <ol>
+        {% for neo_id in items %}
+            <li>{{ neo_id }}</li>
+        {% endfor %}
         </ol>
 
         <button id="plotBtn">Simulate Impact</button>
