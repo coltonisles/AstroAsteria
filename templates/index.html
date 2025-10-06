@@ -526,7 +526,6 @@
     }
 
     // --- PLOTTING FUNCTION  ---
-    // --- PLOTTING FUNCTION  ---
 function plotSelected(neoData, maplat, maplon){
     if(!neoData || maplat === null || maplon === null || !map) {
         document.getElementById('neo-display').textContent = "ERROR: Please select a meteor AND click a map location.";
@@ -601,7 +600,7 @@ function plotSelected(neoData, maplat, maplon){
     // The velocity (neo.v_inf_kps) must be converted to m/s by multiplying by 1000
     const energyK = 0.5 * neo.mass_kg * Math.pow(neo.v_inf_kps * 1000, 2);
 
-        //resulting 
+        //resulting
         //pi*r^2 for total area impacted
         //palermo scale is in db?
 
@@ -615,7 +614,7 @@ function plotSelected(neoData, maplat, maplon){
             <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
             <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
             <li>Resulting Earthquake Magnitude: ${momentMagnitude.toFixed(2)}</li>
-            <li>Total Area Impacted: TBD</li> 
+            <li>Total Area Impacted: TBD</li>
             <li>Palermo Scale: TBD</li>
         `;
     }
