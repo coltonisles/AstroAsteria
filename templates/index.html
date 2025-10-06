@@ -594,6 +594,10 @@
         const craterDiameter_km = Math.pow(energyK / 9.1e17, 1/2.59); // divide by 2 for radius, then /1000 for km
         const craterRadius_km = craterDiameter_km/2;
 
+        //resulting 
+        //pi*r^2 for total area impacted
+        //palermo scale is in db?
+
         document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
@@ -601,7 +605,7 @@
             <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
             <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
             <li>Resulting Earthquake Magnitude: TBD</li>
-            <li>Total Area Impacted: TBD</li>
+            <li>Total Area Impacted: TBD</li> 
             <li>Palermo Scale: TBD</li>
         `;
     }
