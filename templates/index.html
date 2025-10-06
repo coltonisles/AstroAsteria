@@ -591,65 +591,66 @@ function plotSelected(neoData, maplat, maplon){
 }
 
     // --- FUNCTION TO POPULATE DETAILS ---
-    function populateDetails(neo) {
+    // --- FUNCTION TO POPULATE DETAILS ---
+function populateDetails(neo) {
 
     const PI = Math.PI;
     const JOULES_PER_MEGATON = 4.184e15;
 
-    // Calculate Kinetic Energy (J)
-    // The velocity (neo.v_inf_kps) must be converted to m/s by multiplying by 1000
-    const energyK = 0.5 * neo.mass_kg * Math.pow(neo.v_inf_kps * 1000, 2);
+    // Safely retrieve mass and velocity, defaulting to 0 if missing to prevent calculation errors
+    const mass_kg = neo.mass_kg ?? 0;
+    const v_kps = neo.v_inf_kps ?? 0;
 
-        //resulting
-        //pi*r^2 for total area impacted
-        //palermo scale is in db?
+    // Use safe variables for calculation
+    const energyK = 0.5 * mass_kg * Math.pow(v_kps * 1000, 2);
 
-        const energySeismic =  energyK * 0.05;
-        const momentMagnitude = (Math.log10(energySeismic)-5.24)/1.44;
-
-        document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
-        const impDetailsList = document.getElementById('impact-details');
-        impDetailsList.innerHTML = `
-            <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
-            <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
-            <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
-            <li>Resulting Earthquake Magnitude: ${momentMagnitude.toFixed(2)}</li>
-            <li>Total Area Impacted: TBD</li>
-            <li>Palermo Scale: TBD</li>
-        `;
-    }
-    // FIX 1: Calculate Energy in Megatons (Mt) from the freshly calculated energyK.
-    // This ensures the displayed energy is consistent with the velocity and mass shown.
+    // Calculate Energy in Megatons (Mt)
     const energyMT = energyK / JOULES_PER_MEGATON;
 
-    // FIX 2: Use the pre-calculated blast radius (in meters) from the click listener and convert to km.
-    // This ensures the number shown matches the animated red circle's radius.
+    // Use the pre-calculated blast radius (in meters) from the click listener and convert to km.
     const blastR_km = (neo.calculated_radius / 1000).toFixed(2);
 
-    // Calculate Crater Radius (diameter is in km, then divide by 2 for radius)
+    // Calculate Crater Radius
     const craterCountExp = 1.0/2.59;
     const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
     const craterRadius_km = craterDiameter_km / 2;
 
-    // Asteroid Details List (second row, first column)
+    // --- Data Display Logic (using ternary operators for 'N/A' safety) ---
+
+    const diameter_km = neo.estimated_diameter_meters ? (neo.estimated_diameter_meters / 1000).toFixed(3) : 'N/A';
+    const massDisplay = mass_kg > 0 ? mass_kg.toExponential(2) : 'N/A';
+    const velDisplay = v_kps > 0 ? v_kps.toFixed(2) : 'N/A';
+
+    const energyDisplay = energyMT > 0 ? energyMT.toFixed(2) : 'N/A';
+    const craterDisplay = craterRadius_km > 0 ? craterRadius_km.toFixed(2) : 'N/A';
+
+    // **CRITICAL FIX:** Target the H3 elements directly within the details container DIVs.
+    // Assuming the details divs are the first two children of #details-container
+
+    // Target the first H3 (Asteroid Details)
     document.querySelector("#details-container > div:first-child h3").textContent = `${neo.name} Details:`;
+
+    // Target the second H3 (Impact Details)
+    document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
+
+
+    // Asteroid Details List (first column)
     const astDetailsList = document.getElementById('asteroid-details');
     astDetailsList.innerHTML = `
-        <li>Impact Probability: tbd</li>
-        <li>Predicted Closest Approach Date: tbd</li>
-        <li>Diameter: ${(neo.estimated_diameter_meters / 1000).toFixed(3)} km</li>
-        <li>Mass: ${neo.mass_kg.toExponential(2)} kg</li>
-        <li>Velocity: ${neo.v_inf_kps.toFixed(2)} km/s</li>
+        <li>Impact Probability: ${neo.prob ?? 'N/A'}</li>
+        <li>Predicted Closest Approach Date: ${neo.date ?? 'N/A'}</li>
+        <li>Diameter: ${diameter_km} km</li>
+        <li>Mass: ${massDisplay} kg</li>
+        <li>Velocity: ${velDisplay} km/s</li>
         <li>Density (kg/m<sup>3</sup>): 2600 kg/m³</li>
     `;
 
-    // Impact Details List (second row, second column)
-    document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
+    // Impact Details List (second column)
     const impDetailsList = document.getElementById('impact-details');
     impDetailsList.innerHTML = `
-        <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
+        <li>Energy: ${energyDisplay} Megatons</li>
         <li>Over Pressure Radius (&lt; 4 psi): ${blastR_km} km</li>
-        <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
+        <li>Crater Radius: ${craterDisplay} km</li>
         <li>Resulting Earthquake Magnitude: TBD</li>
         <li>Total Area Impacted: TBD</li>
         <li>Palermo Scale: TBD</li>
