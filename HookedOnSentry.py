@@ -272,7 +272,8 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
             sentry_object_details_dict['ip'] = float(sentry_object_details_json['summary']['ip'])  # impact probability
             sentry_object_details_dict['energy'] = float(sentry_object_details_json['summary'].get('energy', None))  # in Mt
             sentry_object_details_dict['diameter'] = float(sentry_object_details_json['summary']['diameter'])  / 1000 # in m
-        
+
+
     # compute numeric fallbacks (used when Sentry data not present)
     avg_velocity_kph = compute_average_velocity(velocities_kph) if velocities_kph else None    
     fallback_mass_kg = compute_mass_kg_from_diameter(estimated_diameter_meters)
@@ -316,6 +317,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         'sentry_object_dict': sentry_object_details_dict if is_sentry_object else {},
         #
         'next_approach_date': next_approach_date,
+        'ps_cum': sentry_dict['palermo_scale_ave'],
         #
         'v_inf_kps': v_inf_val,
         'energy_Mt': energy_val,
