@@ -442,13 +442,11 @@
 
     // --- CORE CALCULATION (RESTORED TO MAKE FRONTEND FUNCTIONAL) ---
     //blast radius is the radius in which the blast wave is reaches 4 psi(overpressure: destroy buildings, 3rd degree burns, rupture lungs)
-    function calculateBlastRadius(asRad, V, rho){
-        if(asRad <=0 || V <=0 || rho <=0){
+    function calculateBlastRadius(asRad, V, mass){
+        if(asRad <=0 || V <=0 || mass <=0){
             return 0;
         }
-        const volume = (4/3) * PI * Math.pow(asRad, 3);
-        const mass = rho * volume;
-        const energyK =  0.5 * mass * Math.pow(V, 2); // Joules
+        const energyK =  0.5 * mass * Math.pow(V*1000, 2); // Joules
         const energyMT = energyK / JOULES_PER_MEGATON // Megatons
         // Damage radius in kilometers (km)
         const damageRadius_km = BLAST_RADIUS_FACTOR * Math.pow(energyMT, 1/3);
@@ -517,7 +515,7 @@
             } else if (!done) {
                 // Animation complete, set final display text once
                 const finalBlastRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
-                const finalCraterRadiusKm = (animations[1].targetRadius / 2000).toFixed(2);
+                const finalCraterRadiusKm = (animations[1].targetRadius / 1000).toFixed(2);
                 display.textContent = `Plotted: ${name} | Over Pressure Radius: ${finalBlastRadiusKm} km | Crater Radius: ${finalCraterRadiusKm} km`;
                 done = true;
             }
@@ -545,7 +543,6 @@ function plotSelected(neoData, maplat, maplon){
 
     const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
     const neoName = neoData.name;
-    const meteorPhysicalRad = neoData.estimated_diameter_meters/2 ?? 1; // Default to 1m radius if missing
 
     //compute kinetic energy (J) - FIX: Use v_inf_kps and convert to m/s
     const energyK = 0.5 * mass_kg * Math.pow(v_kps * 1000, 2);
@@ -555,7 +552,7 @@ function plotSelected(neoData, maplat, maplon){
     const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
 
     //convert to meters for Leaflet to display properly
-    const craterRadius_m = (craterDiameter_km * 1000);
+    const craterRadius_m = (craterDiameter_km * 1000) / 2;
 
     if(selectedMarker) map.removeLayer(selectedMarker);
     if(blastCircle) map.removeLayer(blastCircle);
@@ -578,7 +575,7 @@ function plotSelected(neoData, maplat, maplon){
         color: 'darkgray',
         fillColor: '#888',
         fillOpacity: 0.8,
-        radius: meteorPhysicalRad
+        radius: 0
     }).addTo(map);
 
     // Define the animations to run
@@ -720,7 +717,7 @@ function populateDetails(neo) {
                 const calculated_radius = calculateBlastRadius(
                     neoData.estimated_diameter_meters,
                     neoData.v_inf_kps,
-                    2600
+                    neoData.mass_kg
                 );
 
                 // Store the selected meteor's data, including the calculated radius
