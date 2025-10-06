@@ -286,7 +286,8 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
 
     # Find next approach date and add it to the return dictionary
     try:
-        next_approach_date = get_next_approach_date(dates)
+        next_approach_date_AS_date = get_next_approach_date(dates)
+        next_approach_date_str = next_approach_date_AS_date.strftime("%Y-%m-%d") 
     except:
         next_approach_date = "Unavailable"
 
@@ -322,7 +323,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         'sentry_dict': sentry_dict,
         'sentry_object_dict': sentry_object_details_dict if is_sentry_object else {},
         #
-        'next_approach_date': next_approach_date,
+        'next_approach_date': next_approach_date_str,
         'ps_cum': ps_cum,
         #
         'v_inf_kps': v_inf_val,
