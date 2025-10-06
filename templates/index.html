@@ -317,6 +317,14 @@
         margin-right: 15px;
     }
 
+    .placeholder-box img 
+    {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;          
+        display: block;        
+    }
+
     /* Responsive behavior: stack and contain content properly */
     @media (max-width: 1000px) {
         #details-container {
@@ -405,7 +413,7 @@
     </div>
     <div id="graph-placeholder"> 
         <h3>Asteroid's Trajectory</h3>
-        <div class="placeholder-box">[graph-placeholder]</div>
+        <div class="placeholder-box"><img src="{{ image }}" alt="Impact plot"></div>
     </div>
 </div>
 
