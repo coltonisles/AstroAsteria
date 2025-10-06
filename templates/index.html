@@ -601,7 +601,6 @@ function plotSelected(neoData, maplat, maplon){
     // The velocity (neo.v_inf_kps) must be converted to m/s by multiplying by 1000
     const energyK = 0.5 * neo.mass_kg * Math.pow(neo.v_inf_kps * 1000, 2);
 
-<<<<<<< Updated upstream
         //resulting 
         //pi*r^2 for total area impacted
         //palermo scale is in db?
@@ -620,7 +619,6 @@ function plotSelected(neoData, maplat, maplon){
             <li>Palermo Scale: TBD</li>
         `;
     }
-=======
     // FIX 1: Calculate Energy in Megatons (Mt) from the freshly calculated energyK.
     // This ensures the displayed energy is consistent with the velocity and mass shown.
     const energyMT = energyK / JOULES_PER_MEGATON;
@@ -658,7 +656,6 @@ function plotSelected(neoData, maplat, maplon){
         <li>Palermo Scale: TBD</li>
     `;
 }
->>>>>>> Stashed changes
 
     // --- MAIN EXECUTION ---
     document.addEventListener('DOMContentLoaded', function() {
