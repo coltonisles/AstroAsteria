@@ -626,6 +626,11 @@ function populateDetails(neo) {
     const energyDisplay = energyMT > 0 ? energyMT.toFixed(2) : 'N/A';
     const craterDisplay = craterRadius_km > 0 ? craterRadius_km.toFixed(2) : 'N/A';
 
+    const energySeismic = 0.05 * energyK;
+    const magnitude = ((Math.log10(energySeismic)-5.24)/1.44).toFixed(2);
+
+    const areaAffected = Math.PI*(Math.pow(blastR_km,2));
+
     // **CRITICAL FIX:** Target the H3 elements directly within the details container DIVs.
     // Assuming the details divs are the first two children of #details-container
 
@@ -653,8 +658,8 @@ function populateDetails(neo) {
         <li>Energy: ${energyDisplay} Megatons</li>
         <li>Over Pressure Radius (&lt; 4 psi): ${blastR_km} km</li>
         <li>Crater Radius: ${craterDisplay} km</li>
-        <li>Resulting Earthquake Magnitude: TBD</li>
-        <li>Total Area Impacted: TBD</li>
+        <li>Resulting Earthquake Magnitude: ${magnitude} </li>
+        <li>Total Area Impacted: ${areaAffected} km^2</li>
         <li>Palermo Scale: TBD</li>
     `;
 }
