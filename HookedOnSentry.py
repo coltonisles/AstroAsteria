@@ -284,7 +284,10 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
     fallback_diameter_m = estimated_diameter_meters
 
     # Find next approach date and add it to the return dictionary
-    next_approach_date = get_next_approach_date(dates)
+    try:
+        next_approach_date = get_next_approach_date(dates)
+    except:
+        next_approach_date = "Unavailable"
 
 
     # Patch to fix the NESTED IF problem of a dict not being created, leading to too many 'None' values instead of the above fallbacks:
@@ -317,7 +320,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         'sentry_object_dict': sentry_object_details_dict if is_sentry_object else {},
         #
         'next_approach_date': next_approach_date,
-        'ps_cum': sentry_dict['palermo_scale_ave'],
+        'ps_cum': sentry_dict['palermo_scale_ave'] if sentry_dict['palermo_scale_ave'] else {None},
         #
         'v_inf_kps': v_inf_val,
         'energy_Mt': energy_val,
