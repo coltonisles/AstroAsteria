@@ -629,7 +629,7 @@ function populateDetails(neo) {
     const energySeismic = 0.05 * energyK;
     const magnitude = ((Math.log10(energySeismic)-5.24)/1.44).toFixed(2);
 
-    const areaAffected = Math.PI*(Math.pow(blastR_km,2));
+    const areaAffected = (Math.PI*(Math.pow(blastR_km,2))).toFixed(2);
 
     // **CRITICAL FIX:** Target the H3 elements directly within the details container DIVs.
     // Assuming the details divs are the first two children of #details-container
