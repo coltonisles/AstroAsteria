@@ -9,6 +9,7 @@ import time
 import requests
 import pandas as pd
 import os, io
+import base64
 import sys
 from datetime import datetime
 from matplotlib.ticker import MaxNLocator
@@ -305,6 +306,30 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
     ps_cum = sentry_dict.get('palermo_scale_ave') if sentry_dict.get('palermo_scale_ave') is not None else fallback_ps_cum
 
 
+
+    dates_to_plot = convert_approach_dates_to_DateTypeList(dates)
+    fig = Figure(figsize=(10, 5), dpi=120)          # canvas-agnostic Figure
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(dates_to_plot, miss_dist_km, marker='o')
+    ax.set_xlabel('Close Approach Date')
+    ax.set_ylabel('Miss Distance (tens of millions of kilometers from Earth)')
+    ax.set_title(f'Asteroid {name} Proximity to Earth Distance Over Time')
+    ax.tick_params(axis='x', rotation=45)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    fig.autofmt_xdate()
+    ax.axvline(datetime.now(), color='red', linestyle='--', label='Today')
+    ax.grid(True)
+    ax.legend()
+
+    # ---- render to PNG bytes ----
+    png_bytes = io.BytesIO()
+    FigureCanvas(fig).print_png(png_bytes)   # or fig.savefig(png_bytes, format='png')
+    png_bytes.seek(0)
+
+    image_uri = base64.b64encode(png_bytes.getvalue()).decode('utf-8')
+    final_image = f"data:image/png;base64,{image_uri}"
+
     return {        
         # WHEN ACCESSING DIAMETER:
         # TRY GETTING 'diameter_m' if 'diameter_m' is not None else {'estimated_diameter_meters'}
@@ -326,6 +351,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         #
         'next_approach_date': next_approach_date_str,
         'ps_cum': ps_cum,
+        'image': final_image,
         #
         'v_inf_kps': v_inf_val,
         'energy_Mt': energy_val,
@@ -358,7 +384,13 @@ def plot_astroid_png(asteroid_dict):
     png_bytes = io.BytesIO()
     FigureCanvas(fig).print_png(png_bytes)   # or fig.savefig(png_bytes, format='png')
     png_bytes.seek(0)
-    return png_bytes
+
+    image_uri = base64.b64encode(png_bytes.getvalue()).decode('utf-8')
+    final_image = f"data:image/png;base64,{image_uri}"
+
+    asteroid_dict['image'] = final_image
+
+    
 
 # -------------------------------------------------------- #
 # ----- toString() ------- #
@@ -714,7 +746,9 @@ def get_X_soonest_approaching_neo_IDs_from_global_list(limit=10):
 def send_db_to_html(list_of_ids):
     data_dict = {}
     for neo_id in list_of_ids:
+
         data_dict[neo_id] = fetch_asteroid_dictionary(neo_id)
+
     return data_dict
 
 

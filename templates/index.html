@@ -325,6 +325,7 @@
         display: block;        
     }
 
+
     /* Responsive behavior: stack and contain content properly */
     @media (max-width: 1000px) {
         #details-container {
@@ -413,9 +414,13 @@
     </div>
     <div id="graph-placeholder"> 
         <h3>Asteroid's Trajectory</h3>
-        <div class="placeholder-box"><img src="{{ image }}" alt="Impact plot"></div>
+        <div class="placeholder-box"><img src="" alt="Impact plot"></div>
     </div>
+
+    
 </div>
+
+
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -752,6 +757,9 @@ function populateDetails(neo) {
                 lastMapClickCoords.lon
             );
         });
+
+
+
 
     });// End of DOMContentLoaded
 </script>

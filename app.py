@@ -31,14 +31,11 @@ def home():
 
     #json.dumps(json_file)
 
-    png_param = HookedOnSentry.fetch_asteroid_dictionary('2001566')    
-    image = HookedOnSentry.plot_astroid_png(png_param)
-    image_uri = base64.b64encode(image.getvalue()).decode('utf-8')
-    final_image = f"data:image/png;base64,{image_uri}"
+   
 
 
 
-    return render_template('index.html', items=list_of_astroid, item2=json_file, image=final_image)
+    return render_template('index.html', items=list_of_astroid, item2=json_file)
 
 
 
