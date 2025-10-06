@@ -8,6 +8,7 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 
@@ -25,12 +26,28 @@ def home():
     for i in closests:
         list_of_astroid.append(HookedOnSentry.fetch_asteroid_dictionary(i)['name'])
 
-    return render_template('index.html', items=list_of_astroid)
+    json_file = HookedOnSentry.send_db_to_html(closests)
 
+    json.dumps(json_file)
+
+    return render_template('index.html', items=list_of_astroid, item2=json_file)
+
+HookedOnSentry.multipage_fetch_NEO_IDs(10)
+closests = HookedOnSentry.get_X_soonest_approaching_neo_IDs_from_global_list(10)
+list_of_astroid = []
+
+for i in closests:
+    list_of_astroid.append(HookedOnSentry.fetch_asteroid_dictionary(i)['name'])
+
+json_file = HookedOnSentry.send_db_to_html(closests)
+
+print('hi')
+print(closests)
+print(json_file)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
     
 
 

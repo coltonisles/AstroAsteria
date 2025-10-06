@@ -367,7 +367,7 @@
 <div class="top-container">  <div id="map"></div>
 
     <div id="list-container">
-        <ol>
+        <ol id="neo-list">
         {% for neo_id in items %}
             <li>{{ neo_id }}</li>
         {% endfor %}
@@ -429,17 +429,8 @@
     const JOULES_PER_MEGATON = 4.184e15;
     const BLAST_RADIUS_FACTOR = 2.5; // EIEP constant at 4psi (overpressure)
 
-    // --- SIMULATED EXTERNAL DATABASE ---
-    //replace with actual backend hooks
-    const ASTEROID_DB = {
-        "1998 QE2": { r_ast: 5, velocity: 20000, density: ASSUMED_DENSITY, diameter_km: 0.01, mass_kg: 1e6, prob: "Low", date: "N/A" },
-        "2023 JD4": { r_ast: 50, velocity: 15000, density: ASSUMED_DENSITY, diameter_km: 0.1, mass_kg: 1.5e7, prob: "Medium", date: "2050" },
-        "4179 Toutatis": { r_ast: 2700, velocity: 30000, density: ASSUMED_DENSITY, diameter_km: 5.4, mass_kg: 2e14, prob: "Low", date: "2069" },
-        "Deep Impact": { r_ast: 0.5, velocity: 25000, density: ASSUMED_DENSITY, diameter_km: 0.001, mass_kg: 1e5, prob: "Low", date: "N/A" },
-        "Vesta Scout": { r_ast: 500, velocity: 18000, density: ASSUMED_DENSITY, diameter_km: 1.0, mass_kg: 5e11, prob: "High", date: "2035" },
-        "Pallas Target": { r_ast: 750, velocity: 22000, density: ASSUMED_DENSITY, diameter_km: 1.5, mass_kg: 1e12, prob: "Low", date: "2099" },
-        "Chicxulub (Test)": { r_ast: 5000, velocity: 25000, density: 3000, diameter_km: 10, mass_kg: 1e15, prob: "N/A", date: "Past" }
-    };
+   
+    const ASTEROID_DB = {{ item2 | tojson | safe }};
 
     // --- CORE CALCULATION (RESTORED TO MAKE FRONTEND FUNCTIONAL) ---
     //blast radius is the radius in which the blast wave is reaches 4 psi(overpressure: destroy buildings, 3rd degree burns, rupture lungs)
