@@ -414,7 +414,7 @@
     </div>
     <div id="graph-placeholder"> 
         <h3>Asteroid's Trajectory</h3>
-        <div class="placeholder-box"><img src="" alt="Impact plot"></div>
+        <div class="placeholder-box"><img id="plotImage" src="" alt="Impact plot"></div>
     </div>
 
     
@@ -592,7 +592,7 @@ function plotSelected(neoData, maplat, maplon){
     startAnimation(animations, neoName);
 }
 
-    // --- FUNCTION TO POPULATE DETAILS ---
+
     // --- FUNCTION TO POPULATE DETAILS ---
 function populateDetails(neo) {
 
@@ -607,7 +607,7 @@ function populateDetails(neo) {
     const energyK = 0.5 * mass_kg * Math.pow(v_kps * 1000, 2);
 
     // Calculate Energy in Megatons (Mt)
-    const energyMT = energyK / JOULES_PER_MEGATON;
+    const energyMT = neo.energy_Mt;
 
     // Use the pre-calculated blast radius (in meters) from the click listener and convert to km.
     const blastR_km = (neo.calculated_radius / 1000).toFixed(2);
