@@ -361,7 +361,7 @@
 <body>
     
     <header>
-        AstroAsteria Impact Simulator
+        AstroAsteria NEO Impact Simulator
     </header>
 
 <div class="top-container">  <div id="map"></div>
@@ -392,8 +392,8 @@
     <div> <h3>Impact Details:</h3>
         <ul id="impact-details">
             <li>Energy(Mt of TNT):</li>
+            <li>Over Pressure Radius(km):</li>
             <li>Crater Radius(km):</li>
-            <li>Velocity Upon Entry:</li>
             <li>Resulting Earthquake Magnitude:</li>
             <li>Total Area Impacted(km<sup>2</sup>):</li>
             <li><abbr title="A logarithmic scale used by astronomers to prioritize and assess the collision risk of Near-Earth Objects (NEOs).
@@ -502,7 +502,7 @@
             } else if (!done) {
                 // Animation complete, set final display text once
                 const finalBlastRadiusKm = (animations[0].targetRadius / 1000).toFixed(2);
-                const finalCraterRadiusKm = (animations[1].targetRadius / 1000).toFixed(2);
+                const finalCraterRadiusKm = (animations[1].targetRadius / 2000).toFixed(2);
                 display.textContent = `Plotted: ${name} | Over Pressure Radius: ${finalBlastRadiusKm} km | Crater Radius: ${finalCraterRadiusKm} km`;
                 done = true;
             }
@@ -520,6 +520,16 @@
         const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
         const neoName = neoData.name;
         const meteorPhysicalRad = neoData.r_ast;
+
+        //compute kinetic energy (J)
+        const energyK = 0.5 * neoData.mass_kg * Math.pow(neoData.velocity, 2);
+        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
+        //emprical crater diameter (=> in km)
+        const craterCountExp = 1.0/2.59
+        const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
+
+        //convert to meters for Leaflet to display properly
+        const craterRadius_m = (craterDiameter_km * 1000);
 
         if(selectedMarker) map.removeLayer(selectedMarker);
         if(blastCircle) map.removeLayer(blastCircle);
@@ -548,7 +558,7 @@
         // Define the animations to run
         const animations = [
             { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
-            { circle: craterCircle, targetRadius: meteorPhysicalRad, duration: 200, isMainBlast: false }
+            { circle: craterCircle, targetRadius: craterRadius_m, duration: 200, isMainBlast: false }
         ];
 
         startAnimation(animations, neoName);
@@ -571,14 +581,17 @@
         // Impact Details List (second row, second column)
         const energyK = 0.5 * neo.mass_kg * Math.pow(neo.velocity, 2);
         const energyMT = energyK / JOULES_PER_MEGATON;
-        const blastR_km = Math.round(neo.calculated_radius / 1000);
+        const blastR_km = (neo.calculated_radius / 1000).toFixed(2);
+
+        const craterDiameter_km = Math.pow(energyK / 9.1e17, 1/2.59); // divide by 2 for radius, then /1000 for km
+        const craterRadius_km = craterDiameter_km/2;
 
         document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
             <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
-            <li>Blast Radius (4 psi): ${blastR_km} km</li>
-            <li>Velocity Upon Entry: ${neo.velocity / 1000} km/s</li>
+            <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
+            <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
             <li>Resulting Earthquake Magnitude: TBD</li>
             <li>Total Area Impacted: TBD</li>
             <li>Palermo Scale: TBD</li>
