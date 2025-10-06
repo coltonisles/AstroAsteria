@@ -29,11 +29,6 @@ def home():
         
     json_file = HookedOnSentry.send_db_to_html(closests)
 
-    #json.dumps(json_file)
-
-   
-
-
 
     return render_template('index.html', items=list_of_astroid, item2=json_file)
 
