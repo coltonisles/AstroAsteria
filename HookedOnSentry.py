@@ -13,7 +13,8 @@ import sys
 from datetime import datetime
 from matplotlib.ticker import MaxNLocator
 import matplotlib.dates as mdates
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 api_key = "EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w"
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
 
@@ -332,24 +333,31 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         'diameter_m': diameter_val
     }
 
-# -- plot the RETURNED DICTIONARY from 'fetch_asteroid_dictionary(neo_id, api_key)' -- #
-def plot_asteroid_dictionary(asteroid_dict):
+
+    
+def plot_astroid_png(asteroid_dict):
+    # ---- build the figure exactly as before ----
     dates_to_plot = convert_approach_dates_to_DateTypeList(asteroid_dict['close_approach_date'])
-    plt.figure(figsize=(10, 5))
-    plt.plot(dates_to_plot, asteroid_dict['miss_distance_km'], marker='o')
-    plt.xlabel('Close Approach Date')
-    plt.ylabel('Miss Distance (tens of millions of kilometers from Earth)')
-    plt.title(f'Asteroid {asteroid_dict["name"]} Proximity to Earth Distance Over Time')
-    plt.xticks(rotation=45)
-    # Format the x-axis dates
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))  # Change format to just Year
-    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())  # Automatically determine good intervals
-    plt.gcf().autofmt_xdate()  # Automatically format the x-axis labels
-    plt.axvline(datetime.now(), color='red', linestyle='--', label='Today')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.legend()
-    plt.show()
+
+    fig = Figure(figsize=(10, 5), dpi=120)          # canvas-agnostic Figure
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(dates_to_plot, asteroid_dict['miss_distance_km'], marker='o')
+    ax.set_xlabel('Close Approach Date')
+    ax.set_ylabel('Miss Distance (tens of millions of kilometers from Earth)')
+    ax.set_title(f'Asteroid {asteroid_dict["name"]} Proximity to Earth Distance Over Time')
+    ax.tick_params(axis='x', rotation=45)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    fig.autofmt_xdate()
+    ax.axvline(datetime.now(), color='red', linestyle='--', label='Today')
+    ax.grid(True)
+    ax.legend()
+
+    # ---- render to PNG bytes ----
+    png_bytes = io.BytesIO()
+    FigureCanvas(fig).print_png(png_bytes)   # or fig.savefig(png_bytes, format='png')
+    png_bytes.seek(0)
+    return png_bytes
 
 # -------------------------------------------------------- #
 # ----- toString() ------- #
