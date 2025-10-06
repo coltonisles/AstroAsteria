@@ -606,13 +606,16 @@ function plotSelected(neoData, maplat, maplon){
         //pi*r^2 for total area impacted
         //palermo scale is in db?
 
+        const energySeismic =  energyK * 0.05;
+        const momentMagnitude = (Math.log10(energySeismic)-5.24)/1.44;
+
         document.querySelector("body > div:last-child > div:nth-child(2) h3").textContent = `Impact Details:`;
         const impDetailsList = document.getElementById('impact-details');
         impDetailsList.innerHTML = `
             <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
             <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
             <li>Over Pressure Radius (< 4 psi): ${blastR_km} km</li>
-            <li>Resulting Earthquake Magnitude: TBD</li>
+            <li>Resulting Earthquake Magnitude: ${momentMagnitude.toFixed(2)}</li>
             <li>Total Area Impacted: TBD</li> 
             <li>Palermo Scale: TBD</li>
         `;
