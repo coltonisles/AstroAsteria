@@ -414,7 +414,7 @@
     </div>
     <div id="graph-placeholder"> 
         <h3>Asteroid's Trajectory</h3>
-        <div class="placeholder-box"><img src="" alt="Impact plot"></div>
+        <div class="placeholder-box"><img id="plotImage" src="" alt="Impact plot"></div>
     </div>
 
     
@@ -717,6 +717,9 @@ function populateDetails(neo) {
 
                 const neoName = selectedLi.getAttribute('data-name');
                 const neoData = ASTEROID_DB[neoName];
+
+                document.getElementById("plotImage").src = neoData['image']
+
 
                 // Perform the required calculation using the retrieved properties
                 const calculated_radius = calculateBlastRadius(
