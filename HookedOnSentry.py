@@ -282,6 +282,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
                             if avg_velocity_kph is not None else None)
     fallback_ip = None
     fallback_diameter_m = estimated_diameter_meters
+    fallback_ps_cum = None
 
     # Find next approach date and add it to the return dictionary
     try:
@@ -299,7 +300,9 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
     mass_val = sentry_object_details_dict.get('mass') if sentry_object_details_dict.get('mass') is not None else fallback_mass_kg
     ip_val = sentry_object_details_dict.get('ip') if sentry_object_details_dict.get('ip') is not None else fallback_ip
     diameter_val = sentry_object_details_dict.get('diameter') if sentry_object_details_dict.get('diameter') is not None else fallback_diameter_m
-        
+    ps_cum = sentry_dict.get('palermo_scale_ave') if sentry_dict.get('palermo_scale_ave') is not None else fallback_ps_cum
+
+
     return {        
         # WHEN ACCESSING DIAMETER:
         # TRY GETTING 'diameter_m' if 'diameter_m' is not None else {'estimated_diameter_meters'}
@@ -320,7 +323,7 @@ def fetch_asteroid_dictionary(neo_id) -> dict:
         'sentry_object_dict': sentry_object_details_dict if is_sentry_object else {},
         #
         'next_approach_date': next_approach_date,
-        'ps_cum': sentry_dict['palermo_scale_ave'] if sentry_dict['palermo_scale_ave'] else {None},
+        'ps_cum': ps_cum,
         #
         'v_inf_kps': v_inf_val,
         'energy_Mt': energy_val,
