@@ -29,7 +29,7 @@ def home():
         
     json_file = HookedOnSentry.send_db_to_html(closests)
 
-    json.dumps(json_file)
+    #json.dumps(json_file)
 
     png_param = HookedOnSentry.fetch_asteroid_dictionary('2001566')    
     image = HookedOnSentry.plot_astroid_png(png_param)

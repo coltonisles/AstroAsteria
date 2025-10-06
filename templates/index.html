@@ -460,11 +460,18 @@
         const list = document.getElementById('neo-list');
         list.innerHTML = '';
 
-        Object.keys(ASTEROID_DB).forEach(name =>{
+        Object.keys(ASTEROID_DB).forEach(key =>{
+            //Use the 'key' (the ID) to get the actual asteroid object
+            const asteroid = ASTEROID_DB[key];
+            //Extract the 'name' property from the asteroid object for display
+            const astname = asteroid.name;
+
+            //Create a new list item for each asteroid
             const li = document.createElement('li');
             li.classList.add('list-item');
-            li.textContent = name;
-            li.setAttribute('data-name', name);
+            //Use the extracted name for the visible text content
+            li.textContent = astname;
+            li.setAttribute('data-name', key);
             list.appendChild(li);
         });
     }
@@ -519,81 +526,82 @@
     }
 
     // --- PLOTTING FUNCTION  ---
-    function plotSelected(neoData, maplat, maplon){
-        if(!neoData || maplat === null || maplon === null || !map) {
-            document.getElementById('neo-display').textContent = "ERROR: Please select a meteor AND click a map location.";
-            return;
-        }
-
-        const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
-        const neoName = neoData.name;
-        const meteorPhysicalRad = neoData.r_ast;
-
-        //compute kinetic energy (J)
-        const energyK = 0.5 * neoData.mass_kg * Math.pow(neoData.velocity, 2);
-        //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
-        //emprical crater diameter (=> in km)
-        const craterCountExp = 1.0/2.59
-        const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
-
-        //convert to meters for Leaflet to display properly
-        const craterRadius_m = (craterDiameter_km * 1000);
-
-        if(selectedMarker) map.removeLayer(selectedMarker);
-        if(blastCircle) map.removeLayer(blastCircle);
-        if(craterCircle) map.removeLayer(craterCircle)
-
-
-        map.setView([maplat, maplon], 7);
-
-        selectedMarker = L.marker([maplat, maplon]).addTo(map)
-            .bindPopup(`Impact Center: ${neoName}`).openPopup();
-
-        blastCircle = L.circle([maplat, maplon], {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.2,
-            radius: 0 // Start animation from 0
-        }).addTo(map);
-
-        craterCircle = L.circle([maplat, maplon], {
-            color: 'darkgray',
-            fillColor: '#888',
-            fillOpacity: 0.8,
-            radius: meteorPhysicalRad
-        }).addTo(map);
-
-        // Define the animations to run
-        const animations = [
-            { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
-            { circle: craterCircle, targetRadius: craterRadius_m, duration: 200, isMainBlast: false }
-        ];
-
-        startAnimation(animations, neoName);
+    // --- PLOTTING FUNCTION  ---
+function plotSelected(neoData, maplat, maplon){
+    if(!neoData || maplat === null || maplon === null || !map) {
+        document.getElementById('neo-display').textContent = "ERROR: Please select a meteor AND click a map location.";
+        return;
     }
+
+    // Safely retrieve mass and velocity, defaulting to 0 if missing.
+    const mass_kg = neoData.mass_kg ?? 0;
+    const v_kps = neoData.v_inf_kps ?? 0;
+
+    // Check for critical missing data before proceeding to plot.
+    if (mass_kg === 0 || v_kps === 0) {
+        document.getElementById('neo-display').textContent =
+            "ERROR: Cannot simulate. Asteroid data is incomplete (Mass or Velocity missing).";
+        return;
+    }
+
+    const blastRadius = neoData.calculated_radius; // Use the pre-calculated radius
+    const neoName = neoData.name;
+    const meteorPhysicalRad = neoData.estimated_diameter_meters/2 ?? 1; // Default to 1m radius if missing
+
+    //compute kinetic energy (J) - FIX: Use v_inf_kps and convert to m/s
+    const energyK = 0.5 * mass_kg * Math.pow(v_kps * 1000, 2);
+
+    //Diameter of crater = (Ek / (9.1 * 10^17)) ^ (1/2.59)
+    const craterCountExp = 1.0/2.59
+    const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
+
+    //convert to meters for Leaflet to display properly
+    const craterRadius_m = (craterDiameter_km * 1000);
+
+    if(selectedMarker) map.removeLayer(selectedMarker);
+    if(blastCircle) map.removeLayer(blastCircle);
+    if(craterCircle) map.removeLayer(craterCircle)
+
+
+    map.setView([maplat, maplon], 7);
+
+    selectedMarker = L.marker([maplat, maplon]).addTo(map)
+        .bindPopup(`Impact Center: ${neoName}`).openPopup();
+
+    blastCircle = L.circle([maplat, maplon], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.2,
+        radius: 0 // Start animation from 0
+    }).addTo(map);
+
+    craterCircle = L.circle([maplat, maplon], {
+        color: 'darkgray',
+        fillColor: '#888',
+        fillOpacity: 0.8,
+        radius: meteorPhysicalRad
+    }).addTo(map);
+
+    // Define the animations to run
+    const animations = [
+        { circle: blastCircle, targetRadius: blastRadius, duration: 1500, isMainBlast: true },
+        { circle: craterCircle, targetRadius: craterRadius_m, duration: 200, isMainBlast: false }
+    ];
+
+    startAnimation(animations, neoName);
+}
 
     // --- FUNCTION TO POPULATE DETAILS ---
     function populateDetails(neo) {
-        // Asteroid Details List (second row, first column)
-        document.querySelector("body > div:last-child > div:first-child h3").textContent = `${neo.name} Details:`;
-        const astDetailsList = document.getElementById('asteroid-details');
-        astDetailsList.innerHTML = `
-            <li>Impact Probability: ${neo.prob}</li>
-            <li>Predicted Impact Date: ${neo.date}</li>
-            <li>Diameter: ${neo.diameter_km} km</li>
-            <li>Mass: ${neo.mass_kg.toExponential(2)} kg</li>
-            <li>Velocity: ${neo.velocity / 1000} km/s</li>
-            <li>Density ($\rho$): ${neo.density} kg/m³</li>
-        `;
 
-        // Impact Details List (second row, second column)
-        const energyK = 0.5 * neo.mass_kg * Math.pow(neo.velocity, 2);
-        const energyMT = energyK / JOULES_PER_MEGATON;
-        const blastR_km = (neo.calculated_radius / 1000).toFixed(2);
+    const PI = Math.PI;
+    const JOULES_PER_MEGATON = 4.184e15;
 
-        const craterDiameter_km = Math.pow(energyK / 9.1e17, 1/2.59); // divide by 2 for radius, then /1000 for km
-        const craterRadius_km = craterDiameter_km/2;
+    // Calculate Kinetic Energy (J)
+    // The velocity (neo.v_inf_kps) must be converted to m/s by multiplying by 1000
+    const energyK = 0.5 * neo.mass_kg * Math.pow(neo.v_inf_kps * 1000, 2);
 
+<<<<<<< Updated upstream
         //resulting 
         //pi*r^2 for total area impacted
         //palermo scale is in db?
@@ -609,6 +617,45 @@
             <li>Palermo Scale: TBD</li>
         `;
     }
+=======
+    // FIX 1: Calculate Energy in Megatons (Mt) from the freshly calculated energyK.
+    // This ensures the displayed energy is consistent with the velocity and mass shown.
+    const energyMT = energyK / JOULES_PER_MEGATON;
+
+    // FIX 2: Use the pre-calculated blast radius (in meters) from the click listener and convert to km.
+    // This ensures the number shown matches the animated red circle's radius.
+    const blastR_km = (neo.calculated_radius / 1000).toFixed(2);
+
+    // Calculate Crater Radius (diameter is in km, then divide by 2 for radius)
+    const craterCountExp = 1.0/2.59;
+    const craterDiameter_km = (Math.pow(energyK / 9.1e17, craterCountExp));
+    const craterRadius_km = craterDiameter_km / 2;
+
+    // Asteroid Details List (second row, first column)
+    document.querySelector("#details-container > div:first-child h3").textContent = `${neo.name} Details:`;
+    const astDetailsList = document.getElementById('asteroid-details');
+    astDetailsList.innerHTML = `
+        <li>Impact Probability: tbd</li>
+        <li>Predicted Closest Approach Date: tbd</li>
+        <li>Diameter: ${(neo.estimated_diameter_meters / 1000).toFixed(3)} km</li>
+        <li>Mass: ${neo.mass_kg.toExponential(2)} kg</li>
+        <li>Velocity: ${neo.v_inf_kps.toFixed(2)} km/s</li>
+        <li>Density (kg/m<sup>3</sup>): 2600 kg/m³</li>
+    `;
+
+    // Impact Details List (second row, second column)
+    document.querySelector("#details-container > div:nth-child(2) h3").textContent = `Impact Details:`;
+    const impDetailsList = document.getElementById('impact-details');
+    impDetailsList.innerHTML = `
+        <li>Energy: ${energyMT.toFixed(2)} Megatons</li>
+        <li>Over Pressure Radius (&lt; 4 psi): ${blastR_km} km</li>
+        <li>Crater Radius: ${craterRadius_km.toFixed(2)} km</li>
+        <li>Resulting Earthquake Magnitude: TBD</li>
+        <li>Total Area Impacted: TBD</li>
+        <li>Palermo Scale: TBD</li>
+    `;
+}
+>>>>>>> Stashed changes
 
     // --- MAIN EXECUTION ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -671,9 +718,9 @@
 
                 // Perform the required calculation using the retrieved properties
                 const calculated_radius = calculateBlastRadius(
-                    neoData.r_ast,
-                    neoData.velocity,
-                    neoData.density
+                    neoData.estimated_diameter_meters,
+                    neoData.v_inf_kps,
+                    2600
                 );
 
                 // Store the selected meteor's data, including the calculated radius
