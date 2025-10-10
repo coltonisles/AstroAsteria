@@ -11,7 +11,6 @@ import os
 import json
 import base64
 
-load_dotenv()
 
 
 app = Flask(__name__)
@@ -19,7 +18,7 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     
-    HookedOnSentry.multipage_fetch_NEO_IDs(10)
+    # HookedOnSentry.multipage_fetch_NEO_IDs(10)
     
     closests = HookedOnSentry.get_X_soonest_approaching_neo_IDs_from_global_list(10)
     list_of_astroid = []
