@@ -17,7 +17,7 @@ import matplotlib.dates as mdates
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-api_key = 'EP74NmRl7BcxtiRjO4YZrAlJwIjOgeuWNP4Pwg4w'
+api_key = ''
 neo_url = f"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key={api_key}"
 
 
